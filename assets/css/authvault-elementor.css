@@ -1,0 +1,13 @@
+/**
+ * Elementor AuthVault widget styles.
+ *
+ * @package AuthVault
+ */
+
+/* Widget-specific overrides can be added here; main form styles come from template. */
+
+.authvault-elementor-login .authvault-form-wrapper,
+.authvault-elementor-register .authvault-form-wrapper,
+.authvault-elementor-reset-password .authvault-form-wrapper {
+	display: block;
+}

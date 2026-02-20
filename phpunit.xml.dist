@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.5/phpunit.xsd"
+	bootstrap="tests/bootstrap.php"
+	colors="true"
+	executionOrder="random"
+	failOnRisky="true"
+	failOnWarning="true"
+	verbose="true"
+>
+	<testsuites>
+		<testsuite name="AuthVault Unit">
+			<directory>tests</directory>
+		</testsuite>
+	</testsuites>
+	<source>
+		<include>
+			<directory>includes</directory>
+			<directory>admin</directory>
+			<directory>public</directory>
+			<directory>elementor</directory>
+		</include>
+		<exclude>
+			<directory>vendor</directory>
+		</exclude>
+		<coverage>
+			<report>
+				<clover outputFile="build/clover.xml"/>
+				<html outputDirectory="build/coverage"/>
+			</report>
+		</coverage>
+	</source>
+</phpunit>

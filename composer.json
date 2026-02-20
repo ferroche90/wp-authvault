@@ -1,0 +1,47 @@
+{
+	"name": "authvault/wp-authvault",
+	"description": "Custom authentication pages with Elementor widget support and security hardening for WordPress.",
+	"type": "project",
+	"license": "GPL-2.0-or-later",
+	"authors": [
+		{
+			"name": "WP AuthVault"
+		}
+	],
+	"require": {
+		"php": ">=8.0"
+	},
+	"require-dev": {
+		"phpunit/phpunit": "^10.5",
+		"brain/monkey": "^2.6"
+	},
+	"autoload": {
+		"psr-4": {
+			"AuthVault\\": "includes/",
+			"AuthVault\\Admin\\": "admin/",
+			"AuthVault\\Public_Area\\": "public/",
+			"AuthVault\\Elementor\\": "elementor/",
+			"AuthVault\\Elementor\\Widgets\\": "elementor/widgets/",
+			"AuthVault\\Tests\\": "tests/"
+		},
+		"classmap": [
+			"includes/",
+			"admin/",
+			"public/",
+			"elementor/",
+			"elementor/widgets/"
+		],
+		"files": [
+			"includes/authvault-helpers.php",
+			"includes/authvault-template-functions.php"
+		]
+	},
+	"config": {
+		"optimize-autoloader": true,
+		"sort-packages": true
+	},
+	"scripts": {
+		"test": "phpunit",
+		"cs": "phpcs --standard=WordPress includes/ admin/ public/ elementor/"
+	}
+}

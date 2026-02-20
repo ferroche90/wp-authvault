@@ -1,0 +1,237 @@
+/**
+ * Public-facing styles for WP AuthVault.
+ * Clean, minimal, modern defaults. Override via CSS custom properties in your theme.
+ *
+ * @package AuthVault
+ */
+
+/* -------------------------------------------------------------------------
+   CSS custom properties (theme overrides)
+   ------------------------------------------------------------------------- */
+.authvault-form-wrapper,
+.authvault-form {
+	--authvault-color-bg: #fff;
+	--authvault-color-bg-input: #fff;
+	--authvault-color-border: #d1d5db;
+	--authvault-color-text: #1f2937;
+	--authvault-color-text-muted: #6b7280;
+	--authvault-color-primary: #2563eb;
+	--authvault-color-primary-hover: #1d4ed8;
+	--authvault-color-link: #2563eb;
+	--authvault-color-link-hover: #1d4ed8;
+	--authvault-color-focus: #2563eb;
+	--authvault-color-error: #dc2626;
+	--authvault-color-success: #059669;
+	--authvault-space-xs: 0.25rem;
+	--authvault-space-sm: 0.5rem;
+	--authvault-space-md: 1rem;
+	--authvault-space-lg: 1.5rem;
+	--authvault-space-xl: 2rem;
+	--authvault-radius-sm: 4px;
+	--authvault-radius-md: 6px;
+	--authvault-radius-lg: 8px;
+	--authvault-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+	--authvault-input-height: 2.75rem;
+	--authvault-font-sans: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+	--authvault-font-size-base: 1rem;
+	--authvault-font-size-sm: 0.875rem;
+	--authvault-font-size-title: 1.5rem;
+}
+
+/* -------------------------------------------------------------------------
+   Form container (BEM: .authvault-form, .authvault-form--login, etc.)
+   ------------------------------------------------------------------------- */
+.authvault-form {
+	background: var(--authvault-color-bg);
+	border-radius: var(--authvault-radius-lg);
+	box-shadow: var(--authvault-shadow);
+	font-family: var(--authvault-font-sans);
+	font-size: var(--authvault-font-size-base);
+	color: var(--authvault-color-text);
+	padding: var(--authvault-space-xl);
+	max-width: 24rem;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.authvault-form__title {
+	margin: 0 0 var(--authvault-space-lg);
+	font-size: var(--authvault-font-size-title);
+	font-weight: 600;
+	line-height: 1.3;
+	color: var(--authvault-color-text);
+}
+
+.authvault-form__inner {
+	display: block;
+}
+
+.authvault-fieldset {
+	border: 0;
+	margin: 0;
+	padding: 0;
+	min-width: 0;
+}
+
+/* -------------------------------------------------------------------------
+   Messages
+   ------------------------------------------------------------------------- */
+.authvault-messages {
+	margin-bottom: var(--authvault-space-lg);
+	padding: var(--authvault-space-md);
+	border-radius: var(--authvault-radius-md);
+	background: var(--authvault-color-bg-input);
+	border: 1px solid var(--authvault-color-border);
+}
+
+.authvault-messages__item {
+	margin: 0;
+	font-size: var(--authvault-font-size-sm);
+	color: var(--authvault-color-text);
+}
+
+.authvault-messages--error .authvault-messages__item {
+	color: var(--authvault-color-error);
+}
+
+.authvault-messages--success .authvault-messages__item {
+	color: var(--authvault-color-success);
+}
+
+/* -------------------------------------------------------------------------
+   Fields (BEM: .authvault-field, .authvault-field__label, .authvault-field__input)
+   ------------------------------------------------------------------------- */
+.authvault-field {
+	margin-bottom: var(--authvault-space-lg);
+}
+
+.authvault-field:last-of-type {
+	margin-bottom: 0;
+}
+
+.authvault-field__label {
+	display: block;
+	margin-bottom: var(--authvault-space-xs);
+	font-size: var(--authvault-font-size-sm);
+	font-weight: 500;
+	color: var(--authvault-color-text);
+}
+
+.authvault-field__label--checkbox {
+	display: flex;
+	align-items: center;
+	gap: var(--authvault-space-sm);
+	font-weight: 400;
+	cursor: pointer;
+}
+
+.authvault-field__input {
+	display: block;
+	width: 100%;
+	height: var(--authvault-input-height);
+	padding: 0 var(--authvault-space-md);
+	font-family: inherit;
+	font-size: var(--authvault-font-size-base);
+	color: var(--authvault-color-text);
+	background: var(--authvault-color-bg-input);
+	border: 1px solid var(--authvault-color-border);
+	border-radius: var(--authvault-radius-md);
+	box-sizing: border-box;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.authvault-field__input::placeholder {
+	color: var(--authvault-color-text-muted);
+}
+
+.authvault-field__input:focus {
+	outline: 0;
+	border-color: var(--authvault-color-focus);
+	box-shadow: 0 0 0 3px rgb(37 99 235 / 0.15);
+}
+
+.authvault-field__input--checkbox {
+	width: auto;
+	height: auto;
+	margin: 0;
+}
+
+/* -------------------------------------------------------------------------
+   Submit button
+   ------------------------------------------------------------------------- */
+.authvault-button,
+.authvault-submit {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	min-height: var(--authvault-input-height);
+	padding: 0 var(--authvault-space-lg);
+	font-family: inherit;
+	font-size: var(--authvault-font-size-base);
+	font-weight: 500;
+	color: #fff;
+	background: var(--authvault-color-primary);
+	border: 0;
+	border-radius: var(--authvault-radius-md);
+	cursor: pointer;
+	transition: background-color 0.15s ease, color 0.15s ease;
+	-webkit-appearance: none;
+	appearance: none;
+}
+
+.authvault-submit:hover {
+	background: var(--authvault-color-primary-hover);
+}
+
+.authvault-submit:focus {
+	outline: 0;
+	box-shadow: 0 0 0 3px rgb(37 99 235 / 0.25);
+}
+
+.authvault-field--submit {
+	margin-top: var(--authvault-space-lg);
+}
+
+/* -------------------------------------------------------------------------
+   Links
+   ------------------------------------------------------------------------- */
+.authvault-form__links {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--authvault-space-md);
+	margin-top: var(--authvault-space-lg);
+	padding-top: var(--authvault-space-lg);
+	border-top: 1px solid var(--authvault-color-border);
+}
+
+.authvault-form__link {
+	font-size: var(--authvault-font-size-sm);
+	color: var(--authvault-color-link);
+	text-decoration: none;
+	transition: color 0.15s ease;
+}
+
+.authvault-form__link:hover {
+	color: var(--authvault-color-link-hover);
+}
+
+/* -------------------------------------------------------------------------
+   Responsive: larger spacing on wider viewports
+   ------------------------------------------------------------------------- */
+@media (min-width: 480px) {
+	.authvault-form {
+		padding: var(--authvault-space-xl);
+		max-width: 28rem;
+	}
+}
+
+@media (min-width: 768px) {
+	.authvault-form {
+		padding: 2rem;
+	}
+
+	.authvault-form__title {
+		font-size: 1.75rem;
+	}
+}
