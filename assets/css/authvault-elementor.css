@@ -1,13 +1,293 @@
 /**
  * Elementor AuthVault widget styles.
+ * Default Lexi-style design; overridable via Elementor Style controls.
  *
  * @package AuthVault
  */
 
-/* Widget-specific overrides can be added here; main form styles come from template. */
+/* -------------------------------------------------------------------------
+   Wrapper & CSS variables (defaults; overridable via Elementor)
+   ------------------------------------------------------------------------- */
+.authvault-form-wrapper.authvault-elementor-login {
+	--authvault-background: 210 40% 98%;
+	--authvault-foreground: 222.2 84% 4.9%;
+	--authvault-card: 0 0% 100%;
+	--authvault-card-foreground: 222.2 84% 4.9%;
+	--authvault-primary: 224 76% 48%;
+	--authvault-primary-foreground: 210 40% 98%;
+	--authvault-muted-foreground: 215.4 16.3% 46.9%;
+	--authvault-accent: 220 14% 96%;
+	--authvault-accent-foreground: 222.2 47.4% 11.2%;
+	--authvault-border: 214.3 31.8% 91.4%;
+	--authvault-input: 214.3 31.8% 91.4%;
+	--authvault-radius: 0.5rem;
 
-.authvault-elementor-login .authvault-form-wrapper,
-.authvault-elementor-register .authvault-form-wrapper,
-.authvault-elementor-reset-password .authvault-form-wrapper {
+	font-family: Inter, sans-serif;
+	color: hsl(var(--authvault-foreground));
+
+	background: hsl(var(--authvault-card));
+	border: 1px solid hsl(var(--authvault-border));
+	border-radius: var(--authvault-radius);
+	box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+	overflow: hidden;
+}
+
+/* Title & description */
+.authvault-form-wrapper .authvault-form-title,
+.authvault-form-wrapper .authvault-form-desc {
+	padding-left: 1.5rem;
+	padding-right: 1.5rem;
+	text-align: center;
+}
+
+.authvault-form-wrapper .authvault-form-title {
+	padding-top: 1.5rem;
+	padding-bottom: 0.25rem;
+	margin: 0;
+}
+
+.authvault-form-wrapper .authvault-form-desc {
+	padding-top: 0;
+	padding-bottom: 1rem;
+	margin: 0;
+}
+
+.authvault-form-wrapper .authvault-form-title {
+	margin: 0;
+	font-family: "Playfair Display", serif;
+	font-weight: 600;
+	letter-spacing: -0.025em;
+	font-size: 1.5rem;
+	line-height: 2rem;
+	color: hsl(var(--authvault-card-foreground));
+}
+
+.authvault-form-wrapper .authvault-form-desc {
+	margin: 0;
+	font-size: 0.875rem;
+	line-height: 1.25rem;
+	color: hsl(var(--authvault-muted-foreground));
+}
+
+/* Form inner area */
+.authvault-form-wrapper .authvault-form {
+	padding: 0 1.5rem 1.5rem;
+	margin: 0;
+}
+
+.authvault-form-wrapper .authvault-form__inner {
+	margin: 0;
+}
+
+/* Fields layout */
+.authvault-form-wrapper .authvault-fieldset {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	margin: 0;
+}
+
+.authvault-form-wrapper .authvault-field {
+	margin: 0;
+	position: relative;
+}
+
+/* Labels */
+.authvault-form-wrapper .authvault-field__label {
+	display: inline-block;
+	margin: 0 0 0.5rem 0;
+	font-size: 0.875rem;
+	line-height: 1;
+	font-weight: 500;
+	color: hsl(var(--authvault-foreground));
+}
+
+/* Text inputs */
+.authvault-form-wrapper .authvault-field__input.authvault-input {
+	width: 100%;
+	height: 2.5rem;
+	border-radius: calc(var(--authvault-radius) - 2px);
+	border: 1px solid hsl(var(--authvault-input));
+	background: hsl(var(--authvault-background));
+	color: hsl(var(--authvault-foreground));
+	padding: 0.5rem 0.75rem;
+	font-family: Inter, sans-serif;
+	font-size: 0.875rem;
+	line-height: 1.25rem;
+	outline: none;
+	box-shadow: none;
+}
+
+.authvault-form-wrapper .authvault-field__input.authvault-input:focus {
+	border-color: hsl(var(--authvault-primary));
+	box-shadow: 0 0 0 3px hsl(var(--authvault-primary) / 0.15);
+}
+
+.authvault-form-wrapper .authvault-field__input.authvault-input::placeholder {
+	color: hsl(var(--authvault-muted-foreground));
+	opacity: 1;
+}
+
+/* Remember me */
+.authvault-form-wrapper .authvault-field--remember {
+	margin-top: 0.25rem;
+}
+
+.authvault-form-wrapper .authvault-field--remember label {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: 0.875rem;
+	line-height: 1.25rem;
+	color: hsl(var(--authvault-muted-foreground));
+	cursor: pointer;
+}
+
+.authvault-form-wrapper .authvault-field--remember input[type="checkbox"] {
+	width: 1rem;
+	height: 1rem;
+	accent-color: hsl(var(--authvault-primary));
+}
+
+/* Submit button */
+.authvault-form-wrapper .authvault-field--submit .authvault-button,
+.authvault-form-wrapper .authvault-field--submit .authvault-submit {
+	width: 100%;
+	height: 2.5rem;
+	border-radius: calc(var(--authvault-radius) - 2px);
+	border: 1px solid transparent;
+	background: hsl(var(--authvault-primary));
+	color: hsl(var(--authvault-primary-foreground));
+	font-weight: 500;
+	font-size: 0.875rem;
+	line-height: 1.25rem;
+	padding: 0.5rem 1rem;
+	box-shadow: none;
+	text-transform: none;
+	transition: background-color 0.15s ease, transform 0.05s ease;
+}
+
+.authvault-form-wrapper .authvault-field--submit .authvault-button:hover,
+.authvault-form-wrapper .authvault-field--submit .authvault-submit:hover {
+	background: hsl(var(--authvault-primary) / 0.9);
+}
+
+.authvault-form-wrapper .authvault-field--submit .authvault-button:active,
+.authvault-form-wrapper .authvault-field--submit .authvault-submit:active {
+	transform: translateY(1px);
+}
+
+/* Links */
+.authvault-form-wrapper .authvault-form__link {
+	display: inline-block;
+	font-size: 0.875rem;
+	line-height: 1.25rem;
+	color: hsl(var(--authvault-primary));
+	text-decoration: none;
+}
+
+.authvault-form-wrapper .authvault-form__link:hover {
+	text-decoration: underline;
+}
+
+.authvault-form-wrapper .authvault-form__links {
+	display: flex;
+	justify-content: center;
+	padding-top: 0.25rem;
+}
+
+/* Input wrap (for icon positioning) */
+.authvault-form-wrapper .authvault-field-input-wrap {
+	position: relative;
+}
+
+/* Email icon (left of username input) */
+.authvault-form-wrapper.authvault-form--has-email-icon .authvault-field--username .authvault-field__input {
+	padding-left: 40px;
+}
+
+.authvault-form-wrapper .authvault-field-icon--email {
+	position: absolute;
+	left: 0.875rem;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 1.125rem;
+	height: 1.125rem;
+	opacity: 0.65;
+	pointer-events: none;
+	color: hsl(var(--authvault-muted-foreground));
+}
+
+.authvault-form-wrapper .authvault-field-icon--email svg {
+	width: 100%;
+	height: 100%;
 	display: block;
+}
+
+/* Password icon (left) and toggle (right) */
+.authvault-form-wrapper.authvault-form--has-password-icon .authvault-field--password .authvault-field__input {
+	padding-left: 40px;
+}
+
+.authvault-form-wrapper.authvault-form--has-password-toggle .authvault-field--password .authvault-field__input {
+	padding-right: 2.75rem;
+}
+
+.authvault-form-wrapper .authvault-field-icon--password {
+	position: absolute;
+	left: 0.875rem;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 1.125rem;
+	height: 1.125rem;
+	opacity: 0.65;
+	pointer-events: none;
+	color: hsl(var(--authvault-muted-foreground));
+}
+
+.authvault-form-wrapper .authvault-field-icon--password svg {
+	width: 100%;
+	height: 100%;
+	display: block;
+}
+
+/* Password visibility toggle (eye) */
+.authvault-form-wrapper .authvault-toggle-password {
+	position: absolute;
+	right: 0.5rem;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 2.5rem;
+	height: 2.5rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	background: transparent;
+	color: hsl(var(--authvault-muted-foreground));
+	cursor: pointer;
+	padding: 0;
+}
+
+.authvault-form-wrapper .authvault-toggle-password:hover {
+	background: transparent;
+	color: hsl(var(--authvault-foreground));
+}
+
+.authvault-form-wrapper .authvault-toggle-password svg {
+	width: 1rem;
+	height: 1rem;
+	display: block;
+}
+
+.authvault-form-wrapper .authvault-toggle-password.is-active {
+	background: transparent;
+	color: hsl(var(--authvault-foreground));
+}
+
+@media (min-width: 768px) {
+	.authvault-form-wrapper .authvault-field__input.authvault-input {
+		font-size: 0.875rem;
+		line-height: 1.25rem;
+	}
 }
