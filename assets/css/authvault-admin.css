@@ -1,131 +1,210 @@
 /**
- * Admin styles for WP AuthVault.
- * Scoped to the AuthVault settings page for a minimal, modern look.
+ * Admin styles for WP AuthVault settings page.
+ * Scoped to .authvault-settings-wrap. Works with all WP admin color schemes.
  *
  * @package AuthVault
  */
 
-/* -------------------------------------------------------------------------
-   Variables (align with WP admin colors where possible)
-   ------------------------------------------------------------------------- */
+/* =========================================================================
+   Page layout
+   ========================================================================= */
 .authvault-settings-wrap {
-	--authvault-card-bg: #fff;
-	--authvault-card-border: #c3c4c7;
-	--authvault-card-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
-	--authvault-radius: 8px;
-	--authvault-input-border: #8c8f94;
-	--authvault-input-focus: #2271b1;
-	--authvault-label-color: #1d2327;
-	--authvault-divider: #dcdcde;
-	--authvault-spacing: 1.5rem;
+	max-width: 900px;
+	padding-top: 20px;
 }
 
-/* Dark admin (WP 5.7+)
-   WP uses .wp-dark-mode or body class; we keep defaults and let WP override.
-   ------------------------------------------------------------------------- */
-
-/* -------------------------------------------------------------------------
-   Page title
-   ------------------------------------------------------------------------- */
 .authvault-settings-wrap .authvault-settings-title {
-	margin-bottom: 1.25rem;
-	font-size: 1.75rem;
-	font-weight: 600;
-	color: var(--authvault-label-color);
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin: 0 0 24px;
+	padding: 0;
+	font-size: 26px;
+	font-weight: 700;
+	line-height: 1.2;
+	letter-spacing: -0.3px;
 }
 
-/* -------------------------------------------------------------------------
-   Section cards (each settings section)
-   ------------------------------------------------------------------------- */
-.authvault-settings-wrap .form-table {
-	margin: 0 0 var(--authvault-spacing);
-	padding: var(--authvault-spacing);
-	background: var(--authvault-card-bg);
-	border: 1px solid var(--authvault-card-border);
-	border-radius: var(--authvault-radius);
-	box-shadow: var(--authvault-card-shadow);
-}
-
+/* =========================================================================
+   Section cards
+   ========================================================================= */
 .authvault-settings-wrap h2 {
-	margin: 0 0 0.75rem;
-	padding-bottom: 0.5rem;
-	font-size: 1.125rem;
+	margin: 32px 0 0;
+	padding: 16px 20px;
+	font-size: 15px;
 	font-weight: 600;
-	color: var(--authvault-label-color);
-	border-bottom: 1px solid var(--authvault-divider);
+	line-height: 1.4;
+	color: #1d2327;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-bottom: none;
+	border-radius: 4px 4px 0 0;
 }
 
-.authvault-settings-wrap h2 + .form-table {
+.authvault-settings-wrap h2:first-of-type {
 	margin-top: 0;
 }
 
-/* -------------------------------------------------------------------------
-   Rows and labels
-   ------------------------------------------------------------------------- */
-.authvault-settings-wrap .form-table th {
-	padding: 0.75rem 1rem 0.75rem 0;
-	font-weight: 600;
-	color: var(--authvault-label-color);
+.authvault-settings-wrap h2 + p {
+	margin: 0;
+	padding: 0 20px 12px;
+	font-size: 13px;
+	color: #646970;
+	background: #fff;
+	border-left: 1px solid #c3c4c7;
+	border-right: 1px solid #c3c4c7;
+}
+
+.authvault-settings-wrap h2 + .form-table,
+.authvault-settings-wrap h2 + p + .form-table {
+	margin-top: 0;
+	border-top: 1px solid #e5e5e5;
+	border-radius: 0 0 4px 4px;
+}
+
+.authvault-settings-wrap .form-table {
+	margin: 0 0 0;
+	padding: 0;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+	border-spacing: 0;
+	border-collapse: separate;
+}
+
+/* =========================================================================
+   Table rows
+   ========================================================================= */
+.authvault-settings-wrap .form-table th,
+.authvault-settings-wrap .form-table td {
+	padding: 16px 20px;
+	border-bottom: 1px solid #f0f0f1;
 	vertical-align: top;
 }
 
-.authvault-settings-wrap .form-table td {
-	padding: 0.75rem 0;
+.authvault-settings-wrap .form-table tr:last-child th,
+.authvault-settings-wrap .form-table tr:last-child td {
+	border-bottom: none;
 }
 
-/* -------------------------------------------------------------------------
-   Form controls
-   ------------------------------------------------------------------------- */
+.authvault-settings-wrap .form-table th {
+	width: 220px;
+	font-size: 13px;
+	font-weight: 600;
+	line-height: 1.5;
+	color: #1d2327;
+}
+
+.authvault-settings-wrap .form-table td {
+	font-size: 13px;
+	color: #1d2327;
+}
+
+/* =========================================================================
+   Inputs and selects
+   ========================================================================= */
 .authvault-settings-wrap .form-table input[type="text"],
 .authvault-settings-wrap .form-table input[type="number"],
 .authvault-settings-wrap .form-table input[type="email"],
 .authvault-settings-wrap .form-table input[type="password"],
 .authvault-settings-wrap .form-table select {
+	display: block;
 	width: 100%;
-	max-width: 24rem;
-	padding: 0.4rem 0.6rem;
-	border: 1px solid var(--authvault-input-border);
+	max-width: 400px;
+	height: 36px;
+	padding: 0 10px;
+	font-size: 13px;
+	line-height: 34px;
+	color: #2c3338;
+	background: #fff;
+	border: 1px solid #8c8f94;
 	border-radius: 4px;
-	font-size: 14px;
-	line-height: 1.4;
-	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+	box-shadow: none;
+	transition: border-color 0.15s ease;
+	box-sizing: border-box;
+}
+
+.authvault-settings-wrap .form-table input[type="number"] {
+	max-width: 100px;
 }
 
 .authvault-settings-wrap .form-table input:focus,
 .authvault-settings-wrap .form-table select:focus {
-	border-color: var(--authvault-input-focus);
-	box-shadow: 0 0 0 1px var(--authvault-input-focus);
+	border-color: var(--wp-admin-theme-color, #2271b1);
+	box-shadow: 0 0 0 1px var(--wp-admin-theme-color, #2271b1);
 	outline: none;
 }
 
-.authvault-settings-wrap .form-table input[type="checkbox"] {
-	width: 1.125rem;
-	height: 1.125rem;
-	margin-top: 0.15rem;
-	vertical-align: middle;
+.authvault-settings-wrap .form-table select {
+	padding-right: 28px;
+	appearance: none;
+	-webkit-appearance: none;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2350575e'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right 10px center;
+	background-size: 10px 6px;
 }
 
-.authvault-settings-wrap .form-table .description {
-	margin-top: 0.35rem;
-	font-size: 13px;
+/* Checkboxes */
+.authvault-settings-wrap .form-table input[type="checkbox"] {
+	width: 18px;
+	height: 18px;
+	margin: 0;
+	border: 1px solid #8c8f94;
+	border-radius: 3px;
+	vertical-align: middle;
+	cursor: pointer;
+}
+
+.authvault-settings-wrap .form-table input[type="checkbox"]:checked {
+	background: var(--wp-admin-theme-color, #2271b1);
+	border-color: var(--wp-admin-theme-color, #2271b1);
+}
+
+/* =========================================================================
+   Description text below fields
+   ========================================================================= */
+.authvault-settings-wrap .form-table .description,
+.authvault-settings-wrap .form-table td > p {
+	margin: 6px 0 0;
+	font-size: 12px;
+	line-height: 1.5;
 	color: #646970;
 }
 
-/* -------------------------------------------------------------------------
-   Buttons
-   ------------------------------------------------------------------------- */
-.authvault-settings-wrap #authvault-settings-form .button-primary {
-	padding: 0.4rem 1rem;
+/* =========================================================================
+   Save / Reset buttons
+   ========================================================================= */
+.authvault-settings-wrap #authvault-settings-form .submit {
+	margin: 0;
+	padding: 20px 0 0;
+}
+
+.authvault-settings-wrap .button-primary {
+	min-height: 36px;
+	padding: 0 16px;
+	font-size: 13px;
+	font-weight: 600;
+	line-height: 34px;
 	border-radius: 4px;
-	font-weight: 500;
 }
 
 .authvault-settings-wrap .authvault-reset-form {
-	margin-top: var(--authvault-spacing);
-	padding-top: var(--authvault-spacing);
-	border-top: 1px solid var(--authvault-divider);
+	margin-top: 24px;
+	padding-top: 24px;
+	border-top: 1px solid #c3c4c7;
 }
 
-.authvault-settings-wrap .authvault-reset-form .button-secondary {
+.authvault-settings-wrap .authvault-reset-form .submit {
+	margin: 0;
+	padding: 0;
+}
+
+.authvault-settings-wrap .button-secondary {
+	min-height: 34px;
+	padding: 0 14px;
+	font-size: 13px;
+	line-height: 32px;
 	border-radius: 4px;
 }

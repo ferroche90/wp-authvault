@@ -42,6 +42,7 @@ const IGNORE_DIRS = ['node_modules', '.git', '.cursor', '.vscode', 'vendor', 'co
 const IGNORE_FILES = [
   'build.js',
   'update-plugin-version.js',
+  'build-admin-css.js',
   'package.json',
   'package-lock.json',
   'composer.json',
