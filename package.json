@@ -1,6 +1,6 @@
 {
   "name": "wp-authvault",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "description": "Build and minify assets for WP AuthVault.",
   "private": true,
   "scripts": {
