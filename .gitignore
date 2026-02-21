@@ -12,6 +12,7 @@ assets/js/*.min.js
 # Build & test
 /build/
 /phpunit.xml
+*.zip
 .phpunit.result.cache
 coverage/
 *.log
