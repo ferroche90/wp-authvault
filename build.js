@@ -41,6 +41,7 @@ const IGNORE_SOURCE_ASSETS = [
 const IGNORE_DIRS = ['node_modules', '.git', '.cursor', '.vscode', 'vendor', 'coverage', 'tests'];
 const IGNORE_FILES = [
   'build.js',
+  'update-plugin-version.js',
   'package.json',
   'package-lock.json',
   'composer.json',
