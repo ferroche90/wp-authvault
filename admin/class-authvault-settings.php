@@ -655,8 +655,8 @@ class AuthVault_Settings {
 
 		$this->render_admin_notices();
 
-		echo '<div class="wrap">';
-		echo '<h1>' . esc_html__( 'AuthVault Settings', 'authvault' ) . '</h1>';
+		echo '<div class="wrap authvault-settings-wrap">';
+		echo '<h1 class="authvault-settings-title">' . esc_html__( 'AuthVault Settings', 'authvault' ) . '</h1>';
 
 		echo '<form method="post" action="options.php" id="authvault-settings-form">';
 		settings_fields( self::OPTION_GROUP );
@@ -664,7 +664,7 @@ class AuthVault_Settings {
 		submit_button( __( 'Save Settings', 'authvault' ) );
 		echo '</form>';
 
-		echo '<form method="post" action="" id="authvault-reset-form" style="margin-top: 1em;">';
+		echo '<form method="post" action="" id="authvault-reset-form" class="authvault-reset-form">';
 		wp_nonce_field( self::RESET_NONCE_ACTION, self::RESET_NONCE_ACTION );
 		echo '<p class="submit">';
 		echo '<button type="submit" name="authvault_reset_submit" class="button button-secondary" onclick="return confirm(\'' . esc_js( __( 'Reset all settings to defaults?', 'authvault' ) ) . '\');">' . esc_html__( 'Reset to defaults', 'authvault' ) . '</button>';

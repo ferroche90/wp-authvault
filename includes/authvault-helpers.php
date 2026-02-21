@@ -37,6 +37,33 @@ function authvault_get_settings_defaults() {
 }
 
 /**
+ * Get the URL for an asset, preferring the minified version when available.
+ *
+ * When a .min.css or .min.js file exists on disk and SCRIPT_DEBUG is not set,
+ * returns the URL to the minified file; otherwise returns the URL to the
+ * original file.
+ *
+ * @param string $relative_path Path relative to plugin root (e.g. 'assets/css/authvault-public.css').
+ * @return string URL for the asset.
+ */
+function authvault_asset_url( $relative_path ) {
+	$relative_path = ltrim( $relative_path, '/' );
+	$use_min       = ( ! defined( 'SCRIPT_DEBUG' ) || ! SCRIPT_DEBUG )
+		&& ( str_ends_with( $relative_path, '.css' ) || str_ends_with( $relative_path, '.js' ) );
+
+	if ( $use_min ) {
+		$ext = str_ends_with( $relative_path, '.css' ) ? '.css' : '.js';
+		$min_path = substr( $relative_path, 0, -strlen( $ext ) ) . '.min' . $ext;
+		$min_file = AUTHVAULT_PLUGIN_DIR . $min_path;
+		if ( is_readable( $min_file ) ) {
+			return AUTHVAULT_PLUGIN_URL . $min_path;
+		}
+	}
+
+	return AUTHVAULT_PLUGIN_URL . $relative_path;
+}
+
+/**
  * Build a string of HTML attributes from an associative array.
  *
  * Used by form templates to render wrapper_attributes as safe HTML.

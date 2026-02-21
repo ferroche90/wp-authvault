@@ -101,6 +101,53 @@ class AuthVault_Widget_Login extends Widget_Base {
 		);
 
 		$this->add_control(
+			'show_form_description',
+			array(
+				'label'   => __( 'Show form description', 'authvault' ),
+				'type'    => Controls_Manager::SWITCHER,
+				'default' => '',
+			)
+		);
+
+		$this->add_control(
+			'form_description',
+			array(
+				'label'     => __( 'Form description', 'authvault' ),
+				'type'      => Controls_Manager::TEXTAREA,
+				'default'   => __( 'Enter your credentials to access your account', 'authvault' ),
+				'condition' => array( 'show_form_description' => 'yes' ),
+			)
+		);
+
+		$this->add_control(
+			'show_email_icon',
+			array(
+				'label'   => __( 'Show email icon', 'authvault' ),
+				'type'    => Controls_Manager::SWITCHER,
+				'default' => '',
+			)
+		);
+
+		$this->add_control(
+			'show_password_icon',
+			array(
+				'label'   => __( 'Show password (lock) icon', 'authvault' ),
+				'type'    => Controls_Manager::SWITCHER,
+				'default' => '',
+			)
+		);
+
+		$this->add_control(
+			'show_password_toggle',
+			array(
+				'label'       => __( 'Show password visibility toggle', 'authvault' ),
+				'type'        => Controls_Manager::SWITCHER,
+				'default'     => '',
+				'description' => __( 'Eye icon to show/hide password. Style via Style tab.', 'authvault' ),
+			)
+		);
+
+		$this->add_control(
 			'show_labels',
 			array(
 				'label'   => __( 'Show labels', 'authvault' ),
@@ -115,6 +162,42 @@ class AuthVault_Widget_Login extends Widget_Base {
 				'label'   => __( 'Show placeholders', 'authvault' ),
 				'type'    => Controls_Manager::SWITCHER,
 				'default' => 'yes',
+			)
+		);
+
+		$this->add_control(
+			'username_label',
+			array(
+				'label'   => __( 'Username / email label', 'authvault' ),
+				'type'    => Controls_Manager::TEXT,
+				'default' => __( 'Username or email', 'authvault' ),
+			)
+		);
+
+		$this->add_control(
+			'username_placeholder',
+			array(
+				'label'   => __( 'Username / email placeholder', 'authvault' ),
+				'type'    => Controls_Manager::TEXT,
+				'default' => __( 'Username or email', 'authvault' ),
+			)
+		);
+
+		$this->add_control(
+			'password_label',
+			array(
+				'label'   => __( 'Password label', 'authvault' ),
+				'type'    => Controls_Manager::TEXT,
+				'default' => __( 'Password', 'authvault' ),
+			)
+		);
+
+		$this->add_control(
+			'password_placeholder',
+			array(
+				'label'   => __( 'Password placeholder', 'authvault' ),
+				'type'    => Controls_Manager::TEXT,
+				'default' => __( 'Password', 'authvault' ),
 			)
 		);
 
@@ -275,6 +358,30 @@ class AuthVault_Widget_Login extends Widget_Base {
 					'right'  => array( 'title' => __( 'Right', 'authvault' ), 'icon' => 'eicon-text-align-right' ),
 				),
 				'selectors' => array( '{{WRAPPER}} .authvault-form-title' => 'text-align: {{VALUE}};' ),
+			)
+		);
+		$this->end_controls_section();
+
+		$this->start_controls_section(
+			'section_style_description',
+			array(
+				'label' => __( 'Description', 'authvault' ),
+				'tab'   => Controls_Manager::TAB_STYLE,
+			)
+		);
+		$this->add_group_control(
+			Group_Control_Typography::get_type(),
+			array(
+				'name'     => 'description_typography',
+				'selector' => '{{WRAPPER}} .authvault-form-desc',
+			)
+		);
+		$this->add_control(
+			'description_color',
+			array(
+				'label'     => __( 'Color', 'authvault' ),
+				'type'      => Controls_Manager::COLOR,
+				'selectors' => array( '{{WRAPPER}} .authvault-form-desc' => 'color: {{VALUE}};' ),
 			)
 		);
 		$this->end_controls_section();
@@ -500,6 +607,45 @@ class AuthVault_Widget_Login extends Widget_Base {
 			)
 		);
 		$this->end_controls_section();
+
+		$this->start_controls_section(
+			'section_style_icons',
+			array(
+				'label' => __( 'Field Icons & Toggle', 'authvault' ),
+				'tab'   => Controls_Manager::TAB_STYLE,
+			)
+		);
+		$this->add_control(
+			'field_icons_color',
+			array(
+				'label'     => __( 'Email & lock icon color', 'authvault' ),
+				'type'      => Controls_Manager::COLOR,
+				'selectors' => array(
+					'{{WRAPPER}} .authvault-field-icon--email' => 'color: {{VALUE}};',
+					'{{WRAPPER}} .authvault-field-icon--password' => 'color: {{VALUE}};',
+				),
+			)
+		);
+		$this->add_control(
+			'toggle_color',
+			array(
+				'label'     => __( 'Password toggle (eye) color', 'authvault' ),
+				'type'      => Controls_Manager::COLOR,
+				'selectors' => array( '{{WRAPPER}} .authvault-toggle-password' => 'color: {{VALUE}};' ),
+			)
+		);
+		$this->add_control(
+			'toggle_color_hover',
+			array(
+				'label'     => __( 'Password toggle color (hover/active)', 'authvault' ),
+				'type'      => Controls_Manager::COLOR,
+				'selectors' => array(
+					'{{WRAPPER}} .authvault-toggle-password:hover' => 'color: {{VALUE}};',
+					'{{WRAPPER}} .authvault-toggle-password.is-active' => 'color: {{VALUE}};',
+				),
+			)
+		);
+		$this->end_controls_section();
 	}
 
 	/**
@@ -510,17 +656,26 @@ class AuthVault_Widget_Login extends Widget_Base {
 	protected function render() {
 		$settings = $this->get_settings_for_display();
 		$args     = array(
-			'show_form_title'         => 'yes' === $settings['show_form_title'],
-			'form_title_text'         => $settings['form_title_text'],
-			'show_labels'             => 'yes' === $settings['show_labels'],
-			'show_placeholders'       => 'yes' === $settings['show_placeholders'],
-			'submit_button_text'      => $settings['submit_button_text'],
-			'redirect_after_success'  => isset( $settings['redirect_after_success']['url'] ) ? $settings['redirect_after_success']['url'] : '',
-			'show_remember_me'       => 'yes' === $settings['show_remember_me'],
+			'show_form_title'           => 'yes' === $settings['show_form_title'],
+			'form_title_text'           => $settings['form_title_text'],
+			'show_form_description'     => 'yes' === $settings['show_form_description'],
+			'form_description'          => isset( $settings['form_description'] ) ? $settings['form_description'] : '',
+			'show_email_icon'           => 'yes' === $settings['show_email_icon'],
+			'show_password_icon'        => 'yes' === $settings['show_password_icon'],
+			'show_password_toggle'      => 'yes' === $settings['show_password_toggle'],
+			'show_labels'               => 'yes' === $settings['show_labels'],
+			'show_placeholders'         => 'yes' === $settings['show_placeholders'],
+			'username_label'           => isset( $settings['username_label'] ) ? $settings['username_label'] : '',
+			'username_placeholder'     => isset( $settings['username_placeholder'] ) ? $settings['username_placeholder'] : '',
+			'password_label'            => isset( $settings['password_label'] ) ? $settings['password_label'] : '',
+			'password_placeholder'      => isset( $settings['password_placeholder'] ) ? $settings['password_placeholder'] : '',
+			'submit_button_text'        => $settings['submit_button_text'],
+			'redirect_after_success'    => isset( $settings['redirect_after_success']['url'] ) ? $settings['redirect_after_success']['url'] : '',
+			'show_remember_me'          => 'yes' === $settings['show_remember_me'],
 			'show_forgot_password_link' => 'yes' === $settings['show_forgot_password_link'],
 			'forgot_password_link_text' => $settings['forgot_password_link_text'],
-			'show_register_link'      => 'yes' === $settings['show_register_link'],
-			'register_link_text'      => $settings['register_link_text'],
+			'show_register_link'        => 'yes' === $settings['show_register_link'],
+			'register_link_text'        => $settings['register_link_text'],
 		);
 		$this->add_render_attribute( 'wrapper', 'class', 'authvault-form-wrapper authvault-elementor-login' );
 		?>

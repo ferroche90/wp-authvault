@@ -106,12 +106,23 @@ class AuthVault_Router {
 	 */
 	private function apply_blocked_url_behavior() {
 		$behavior = authvault_get_option( 'wp_login_access_behavior', '404' );
+		
 		if ( '404' === $behavior ) {
-			wp_die(
-				esc_html__( 'You do not have permission to access this resource.', 'authvault' ),
-				esc_html__( 'Not Found', 'authvault' ),
-				array( 'response' => 404 )
-			);
+			global $wp_query;
+			status_header( 404 );
+			nocache_headers();
+			$wp_query->set_404();
+			$template = get_query_template( '404' );
+			
+			if ( is_string( $template ) && '' !== $template && is_readable( $template ) ) {
+				include $template;
+			} else {
+				// No theme 404 template: output minimal 404 with no WordPress-specific message.
+				header( 'Content-Type: text/html; charset=' . get_bloginfo( 'charset' ) );
+				echo '<!DOCTYPE html><html><head><meta charset="' . esc_attr( get_bloginfo( 'charset' ) ) . '"><title>404</title></head><body><h1>404</h1><p>Page not found.</p></body></html>';
+			}
+			
+			exit;
 		}
 		if ( 'home' === $behavior ) {
 			wp_safe_redirect( home_url() );
@@ -369,23 +380,37 @@ class AuthVault_Router {
 		if ( ! is_user_logged_in() ) {
 			return;
 		}
+
 		$login_page_id    = (int) authvault_get_option( 'login_page_id', 0 );
 		$register_page_id = (int) authvault_get_option( 'register_page_id', 0 );
+		
 		if ( 0 >= $login_page_id && 0 >= $register_page_id ) {
 			return;
 		}
+
+		// Allow admins and users who can edit pages to open the login/register page in Elementor editor.
+		$elementor_preview = isset( $_GET['elementor-preview'] ) ? sanitize_text_field( wp_unslash( $_GET['elementor-preview'] ) ) : '';
+		
+		if ( current_user_can( 'edit_pages' ) && '' !== $elementor_preview ) {
+			return;
+		}
+
 		$current_page_id = get_queried_object_id();
+		
 		if ( 0 >= $current_page_id ) {
 			return;
 		}
+		
 		$redirect_url = home_url();
 		$login_redirect_page_id = (int) authvault_get_option( 'login_redirect_page_id', 0 );
+		
 		if ( 0 < $login_redirect_page_id ) {
 			$url = get_permalink( $login_redirect_page_id );
 			if ( is_string( $url ) && '' !== $url ) {
 				$redirect_url = $url;
 			}
 		}
+		
 		if ( $current_page_id === $login_page_id || $current_page_id === $register_page_id ) {
 			wp_safe_redirect( $redirect_url );
 			exit;
