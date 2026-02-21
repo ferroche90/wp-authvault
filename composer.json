@@ -21,8 +21,7 @@
 			"AuthVault\\Admin\\": "admin/",
 			"AuthVault\\Public_Area\\": "public/",
 			"AuthVault\\Elementor\\": "elementor/",
-			"AuthVault\\Elementor\\Widgets\\": "elementor/widgets/",
-			"AuthVault\\Tests\\": "tests/"
+			"AuthVault\\Elementor\\Widgets\\": "elementor/widgets/"
 		},
 		"classmap": [
 			"includes/",
@@ -35,6 +34,11 @@
 			"includes/authvault-helpers.php",
 			"includes/authvault-template-functions.php"
 		]
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"AuthVault\\Tests\\": "tests/"
+		}
 	},
 	"config": {
 		"optimize-autoloader": true,

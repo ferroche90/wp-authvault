@@ -3,12 +3,17 @@
  * Run after `npm run minify` so the zip includes minified assets only.
  * Only vendor/autoload.php and vendor/composer/ are included (no dev deps).
  *
+ * Before archiving, the Composer autoloader is regenerated with --no-dev
+ * so it contains no references to dev packages (phpunit, mockery, etc.).
+ * After the zip is written the autoloader is restored for development.
+ *
  * Usage: node build.js
  * Output: wp-authvault.zip (plugin root)
  */
 
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 const archiver = require('archiver');
 
 const PLUGIN_SLUG = 'wp-authvault';
@@ -21,6 +26,17 @@ const archive = archiver('zip', {
 output.on('close', function () {
   console.log(archive.pointer() + ' total bytes');
   console.log('Plugin archive created successfully: ' + PLUGIN_SLUG + '.zip');
+
+  // Restore full autoloader (with dev) after the zip is written
+  try {
+    execSync('composer dump-autoload --optimize --quiet', {
+      cwd: __dirname,
+      stdio: 'inherit'
+    });
+    console.log('Composer autoloader restored (dev).');
+  } catch (_) {
+    console.warn('Warning: could not restore dev autoloader. Run: composer dump-autoload');
+  }
 });
 
 archive.on('error', function (err) {
@@ -85,6 +101,18 @@ walkDir('', relFiles);
 for (const rel of relFiles) {
   const relSlash = rel.replace(/\\/g, '/');
   archive.file(path.join(__dirname, rel), { name: PLUGIN_SLUG + '/' + relSlash });
+}
+
+// Regenerate Composer autoloader without dev dependencies
+console.log('Regenerating Composer autoloader (--no-dev) …');
+try {
+  execSync('composer dump-autoload --no-dev --optimize --quiet', {
+    cwd: __dirname,
+    stdio: 'inherit'
+  });
+} catch (err) {
+  console.error('composer dump-autoload --no-dev failed. Is Composer installed?');
+  process.exit(1);
 }
 
 // Include only the Composer autoloader (no dev dependencies)
