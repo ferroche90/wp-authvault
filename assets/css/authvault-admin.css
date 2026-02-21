@@ -1,7 +1,131 @@
 /**
  * Admin styles for WP AuthVault.
+ * Scoped to the AuthVault settings page for a minimal, modern look.
  *
  * @package AuthVault
  */
 
-/* Admin styles will be added when features are implemented. */
+/* -------------------------------------------------------------------------
+   Variables (align with WP admin colors where possible)
+   ------------------------------------------------------------------------- */
+.authvault-settings-wrap {
+	--authvault-card-bg: #fff;
+	--authvault-card-border: #c3c4c7;
+	--authvault-card-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+	--authvault-radius: 8px;
+	--authvault-input-border: #8c8f94;
+	--authvault-input-focus: #2271b1;
+	--authvault-label-color: #1d2327;
+	--authvault-divider: #dcdcde;
+	--authvault-spacing: 1.5rem;
+}
+
+/* Dark admin (WP 5.7+)
+   WP uses .wp-dark-mode or body class; we keep defaults and let WP override.
+   ------------------------------------------------------------------------- */
+
+/* -------------------------------------------------------------------------
+   Page title
+   ------------------------------------------------------------------------- */
+.authvault-settings-wrap .authvault-settings-title {
+	margin-bottom: 1.25rem;
+	font-size: 1.75rem;
+	font-weight: 600;
+	color: var(--authvault-label-color);
+}
+
+/* -------------------------------------------------------------------------
+   Section cards (each settings section)
+   ------------------------------------------------------------------------- */
+.authvault-settings-wrap .form-table {
+	margin: 0 0 var(--authvault-spacing);
+	padding: var(--authvault-spacing);
+	background: var(--authvault-card-bg);
+	border: 1px solid var(--authvault-card-border);
+	border-radius: var(--authvault-radius);
+	box-shadow: var(--authvault-card-shadow);
+}
+
+.authvault-settings-wrap h2 {
+	margin: 0 0 0.75rem;
+	padding-bottom: 0.5rem;
+	font-size: 1.125rem;
+	font-weight: 600;
+	color: var(--authvault-label-color);
+	border-bottom: 1px solid var(--authvault-divider);
+}
+
+.authvault-settings-wrap h2 + .form-table {
+	margin-top: 0;
+}
+
+/* -------------------------------------------------------------------------
+   Rows and labels
+   ------------------------------------------------------------------------- */
+.authvault-settings-wrap .form-table th {
+	padding: 0.75rem 1rem 0.75rem 0;
+	font-weight: 600;
+	color: var(--authvault-label-color);
+	vertical-align: top;
+}
+
+.authvault-settings-wrap .form-table td {
+	padding: 0.75rem 0;
+}
+
+/* -------------------------------------------------------------------------
+   Form controls
+   ------------------------------------------------------------------------- */
+.authvault-settings-wrap .form-table input[type="text"],
+.authvault-settings-wrap .form-table input[type="number"],
+.authvault-settings-wrap .form-table input[type="email"],
+.authvault-settings-wrap .form-table input[type="password"],
+.authvault-settings-wrap .form-table select {
+	width: 100%;
+	max-width: 24rem;
+	padding: 0.4rem 0.6rem;
+	border: 1px solid var(--authvault-input-border);
+	border-radius: 4px;
+	font-size: 14px;
+	line-height: 1.4;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.authvault-settings-wrap .form-table input:focus,
+.authvault-settings-wrap .form-table select:focus {
+	border-color: var(--authvault-input-focus);
+	box-shadow: 0 0 0 1px var(--authvault-input-focus);
+	outline: none;
+}
+
+.authvault-settings-wrap .form-table input[type="checkbox"] {
+	width: 1.125rem;
+	height: 1.125rem;
+	margin-top: 0.15rem;
+	vertical-align: middle;
+}
+
+.authvault-settings-wrap .form-table .description {
+	margin-top: 0.35rem;
+	font-size: 13px;
+	color: #646970;
+}
+
+/* -------------------------------------------------------------------------
+   Buttons
+   ------------------------------------------------------------------------- */
+.authvault-settings-wrap #authvault-settings-form .button-primary {
+	padding: 0.4rem 1rem;
+	border-radius: 4px;
+	font-weight: 500;
+}
+
+.authvault-settings-wrap .authvault-reset-form {
+	margin-top: var(--authvault-spacing);
+	padding-top: var(--authvault-spacing);
+	border-top: 1px solid var(--authvault-divider);
+}
+
+.authvault-settings-wrap .authvault-reset-form .button-secondary {
+	border-radius: 4px;
+}
