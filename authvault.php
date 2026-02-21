@@ -3,7 +3,7 @@
  * Plugin Name:       WP AuthVault
  * Plugin URI:       https://zuiven.com/wp-authvault
  * Description:       Custom authentication pages with Elementor widget support and security hardening. Replaces WordPress native login, register, and password reset flows with fully Elementor-styleable pages.
- * Version:           1.0.1
+ * Version:           1.0.2
  * Requires at least: 6.4
  * Requires PHP:      8.0
  * Author:            WP AuthVault
