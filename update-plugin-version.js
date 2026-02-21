@@ -9,9 +9,10 @@
 const fs = require('fs');
 const path = require('path');
 
-const ROOT = __dirname;
-const PACKAGE_JSON_PATH = path.join(ROOT, 'package.json');
-const PLUGIN_FILE_PATH = path.join(ROOT, 'authvault.php');
+// Resolve from this script's directory (plugin root) so paths work regardless of cwd
+const PLUGIN_ROOT = path.resolve(__dirname);
+const PACKAGE_JSON_PATH = path.resolve(PLUGIN_ROOT, 'package.json');
+const PLUGIN_FILE_PATH = path.resolve(PLUGIN_ROOT, 'authvault.php');
 
 if (!fs.existsSync(PACKAGE_JSON_PATH)) {
   console.error('package.json not found.');
