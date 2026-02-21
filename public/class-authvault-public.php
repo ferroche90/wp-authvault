@@ -93,7 +93,7 @@ class AuthVault_Public {
 	public function enqueue_styles() {
 		wp_enqueue_style(
 			$this->plugin_name . '-public',
-			AUTHVAULT_PLUGIN_URL . 'assets/css/authvault-public.css',
+			authvault_asset_url( 'assets/css/authvault-public.css' ),
 			array(),
 			$this->version
 		);
@@ -107,7 +107,7 @@ class AuthVault_Public {
 	public function enqueue_scripts() {
 		wp_enqueue_script(
 			$this->plugin_name . '-public',
-			AUTHVAULT_PLUGIN_URL . 'assets/js/authvault-public.js',
+			authvault_asset_url( 'assets/js/authvault-public.js' ),
 			array( 'jquery' ),
 			$this->version,
 			true

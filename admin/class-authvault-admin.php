@@ -57,7 +57,7 @@ class AuthVault_Admin {
 		}
 		wp_enqueue_style(
 			$this->plugin_name . '-admin',
-			AUTHVAULT_PLUGIN_URL . 'assets/css/authvault-admin.css',
+			authvault_asset_url( 'assets/css/authvault-admin.css' ),
 			array(),
 			$this->version
 		);
@@ -77,7 +77,7 @@ class AuthVault_Admin {
 		}
 		wp_enqueue_script(
 			$this->plugin_name . '-admin',
-			AUTHVAULT_PLUGIN_URL . 'assets/js/authvault-admin.js',
+			authvault_asset_url( 'assets/js/authvault-admin.js' ),
 			array( 'jquery' ),
 			$this->version,
 			true

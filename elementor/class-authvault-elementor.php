@@ -104,7 +104,7 @@ class AuthVault_Elementor {
 	public function enqueue_widget_styles() {
 		wp_enqueue_style(
 			'authvault-elementor',
-			AUTHVAULT_PLUGIN_URL . 'assets/css/authvault-elementor.css',
+			authvault_asset_url( 'assets/css/authvault-elementor.css' ),
 			array(),
 			AUTHVAULT_VERSION
 		);
