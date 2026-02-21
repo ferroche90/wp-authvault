@@ -106,12 +106,23 @@ class AuthVault_Router {
 	 */
 	private function apply_blocked_url_behavior() {
 		$behavior = authvault_get_option( 'wp_login_access_behavior', '404' );
+		
 		if ( '404' === $behavior ) {
-			wp_die(
-				esc_html__( 'You do not have permission to access this resource.', 'authvault' ),
-				esc_html__( 'Not Found', 'authvault' ),
-				array( 'response' => 404 )
-			);
+			global $wp_query;
+			status_header( 404 );
+			nocache_headers();
+			$wp_query->set_404();
+			$template = get_query_template( '404' );
+			
+			if ( is_string( $template ) && '' !== $template && is_readable( $template ) ) {
+				include $template;
+			} else {
+				// No theme 404 template: output minimal 404 with no WordPress-specific message.
+				header( 'Content-Type: text/html; charset=' . get_bloginfo( 'charset' ) );
+				echo '<!DOCTYPE html><html><head><meta charset="' . esc_attr( get_bloginfo( 'charset' ) ) . '"><title>404</title></head><body><h1>404</h1><p>Page not found.</p></body></html>';
+			}
+			
+			exit;
 		}
 		if ( 'home' === $behavior ) {
 			wp_safe_redirect( home_url() );
