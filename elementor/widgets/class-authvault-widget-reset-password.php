@@ -101,6 +101,34 @@ class AuthVault_Widget_Reset_Password extends Widget_Base {
 		);
 
 		$this->add_control(
+			'show_form_description',
+			array(
+				'label'   => __( 'Show form description', 'authvault' ),
+				'type'    => Controls_Manager::SWITCHER,
+				'default' => '',
+			)
+		);
+
+		$this->add_control(
+			'form_description',
+			array(
+				'label'     => __( 'Form description', 'authvault' ),
+				'type'      => Controls_Manager::TEXTAREA,
+				'default'   => __( 'Enter your username or email and we\'ll send you a link to reset your password.', 'authvault' ),
+				'condition' => array( 'show_form_description' => 'yes' ),
+			)
+		);
+
+		$this->add_control(
+			'show_email_icon',
+			array(
+				'label'   => __( 'Show email icon', 'authvault' ),
+				'type'    => Controls_Manager::SWITCHER,
+				'default' => '',
+			)
+		);
+
+		$this->add_control(
 			'show_labels',
 			array(
 				'label'   => __( 'Show labels', 'authvault' ),
@@ -115,6 +143,24 @@ class AuthVault_Widget_Reset_Password extends Widget_Base {
 				'label'   => __( 'Show placeholders', 'authvault' ),
 				'type'    => Controls_Manager::SWITCHER,
 				'default' => 'yes',
+			)
+		);
+
+		$this->add_control(
+			'username_label',
+			array(
+				'label'   => __( 'Username or email label', 'authvault' ),
+				'type'    => Controls_Manager::TEXT,
+				'default' => __( 'Username or email', 'authvault' ),
+			)
+		);
+
+		$this->add_control(
+			'username_placeholder',
+			array(
+				'label'   => __( 'Username or email placeholder', 'authvault' ),
+				'type'    => Controls_Manager::TEXT,
+				'default' => __( 'Username or email', 'authvault' ),
 			)
 		);
 
@@ -247,6 +293,30 @@ class AuthVault_Widget_Reset_Password extends Widget_Base {
 					'right'  => array( 'title' => __( 'Right', 'authvault' ), 'icon' => 'eicon-text-align-right' ),
 				),
 				'selectors' => array( '{{WRAPPER}} .authvault-form-title' => 'text-align: {{VALUE}};' ),
+			)
+		);
+		$this->end_controls_section();
+
+		$this->start_controls_section(
+			'section_style_description',
+			array(
+				'label' => __( 'Description', 'authvault' ),
+				'tab'   => Controls_Manager::TAB_STYLE,
+			)
+		);
+		$this->add_group_control(
+			Group_Control_Typography::get_type(),
+			array(
+				'name'     => 'description_typography',
+				'selector' => '{{WRAPPER}} .authvault-form-desc',
+			)
+		);
+		$this->add_control(
+			'description_color',
+			array(
+				'label'     => __( 'Color', 'authvault' ),
+				'type'      => Controls_Manager::COLOR,
+				'selectors' => array( '{{WRAPPER}} .authvault-form-desc' => 'color: {{VALUE}};' ),
 			)
 		);
 		$this->end_controls_section();
@@ -484,10 +554,15 @@ class AuthVault_Widget_Reset_Password extends Widget_Base {
 		$args     = array(
 			'show_form_title'         => 'yes' === $settings['show_form_title'],
 			'form_title_text'         => $settings['form_title_text'],
+			'show_form_description'   => 'yes' === $settings['show_form_description'],
+			'form_description'        => isset( $settings['form_description'] ) ? $settings['form_description'] : '',
+			'show_email_icon'         => 'yes' === $settings['show_email_icon'],
 			'show_labels'             => 'yes' === $settings['show_labels'],
 			'show_placeholders'       => 'yes' === $settings['show_placeholders'],
+			'username_label'         => isset( $settings['username_label'] ) ? $settings['username_label'] : __( 'Username or email', 'authvault' ),
+			'username_placeholder'   => isset( $settings['username_placeholder'] ) ? $settings['username_placeholder'] : __( 'Username or email', 'authvault' ),
 			'submit_button_text'      => $settings['submit_button_text'],
-			'redirect_after_success' => isset( $settings['redirect_after_success']['url'] ) ? $settings['redirect_after_success']['url'] : '',
+			'redirect_after_success'  => isset( $settings['redirect_after_success']['url'] ) ? $settings['redirect_after_success']['url'] : '',
 			'show_back_to_login_link' => 'yes' === $settings['show_back_to_login_link'],
 			'back_to_login_link_text' => $settings['back_to_login_link_text'],
 		);

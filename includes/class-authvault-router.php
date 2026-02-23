@@ -327,10 +327,12 @@ class AuthVault_Router {
 	}
 
 	/**
-	 * Filter network_site_url for wp-login.php to point to AuthVault login page.
+	 * Filter network_site_url for wp-login.php to point to AuthVault pages.
+	 * - action=rp (reset password confirm): use Password Reset Confirm page with key and login.
+	 * - Otherwise: use Login page.
 	 *
 	 * @param string $url    Full URL.
-	 * @param string $path   Path (e.g. wp-login.php).
+	 * @param string $path   Path (e.g. wp-login.php or wp-login.php?action=rp&key=...&login=...).
 	 * @param string $scheme Scheme.
 	 * @return string
 	 */
@@ -338,6 +340,34 @@ class AuthVault_Router {
 		if ( 'wp-login.php' !== $path && strpos( $path, 'wp-login.php' ) !== 0 ) {
 			return $url;
 		}
+
+		// Password reset confirm link (from lost password email): point to confirm page with key and login.
+		if ( strpos( $path, 'action=rp' ) !== false ) {
+			$confirm_page_id = (int) authvault_get_option( 'password_reset_confirm_page_id', 0 );
+			if ( 0 < $confirm_page_id ) {
+				$confirm_url = get_permalink( $confirm_page_id );
+				if ( is_string( $confirm_url ) && '' !== $confirm_url ) {
+					$query = parse_url( $path, PHP_URL_QUERY );
+					if ( is_string( $query ) && '' !== $query ) {
+						$query_vars = array();
+						wp_parse_str( $query, $query_vars );
+						if ( ! empty( $query_vars['key'] ) && ! empty( $query_vars['login'] ) ) {
+							return add_query_arg(
+								array(
+									'key'   => $query_vars['key'],
+									'login' => $query_vars['login'],
+								),
+								$confirm_url
+							);
+						}
+					}
+				}
+			}
+			// No confirm page or missing key/login: return original URL (do not strip query).
+			return $url;
+		}
+
+		// Login, logout, etc.: point to AuthVault login page.
 		$page_id = (int) authvault_get_option( 'login_page_id', 0 );
 		if ( 0 >= $page_id ) {
 			return $url;

@@ -53,6 +53,7 @@ class AuthVault_Public {
 		add_shortcode( 'authvault_login', array( $this, 'shortcode_login' ) );
 		add_shortcode( 'authvault_register', array( $this, 'shortcode_register' ) );
 		add_shortcode( 'authvault_reset_password', array( $this, 'shortcode_reset_password' ) );
+		add_shortcode( 'authvault_reset_password_confirm', array( $this, 'shortcode_reset_password_confirm' ) );
 	}
 
 	/**
@@ -83,6 +84,35 @@ class AuthVault_Public {
 	 */
 	public function shortcode_reset_password( $atts = array() ) {
 		return authvault_get_reset_form( array(), false );
+	}
+
+	/**
+	 * Shortcode callback: output the password reset confirm (set new password) form.
+	 * Reads key and login from the URL (from the email reset link). Use on the Password Reset Confirm page.
+	 *
+	 * @param array<string, mixed> $atts Shortcode attributes (unused).
+	 * @return string HTML output.
+	 */
+	public function shortcode_reset_password_confirm( $atts = array() ) {
+		$key   = isset( $_GET['key'] ) ? sanitize_text_field( wp_unslash( $_GET['key'] ) ) : '';
+		$login = isset( $_GET['login'] ) ? sanitize_user( wp_unslash( $_GET['login'] ), true ) : '';
+
+		if ( '' === $key || '' === $login ) {
+			$reset_page_id = (int) authvault_get_option( 'password_reset_page_id', 0 );
+			$reset_url     = ( 0 < $reset_page_id ) ? get_permalink( $reset_page_id ) : home_url( '/wp-login.php?action=lostpassword' );
+			if ( ! is_string( $reset_url ) || '' === $reset_url ) {
+				$reset_url = home_url();
+			}
+			return '<p class="authvault-reset-confirm-invalid-link">' . esc_html__( 'This link is invalid or has expired. Please request a new password reset.', 'authvault' ) . ' <a href="' . esc_url( $reset_url ) . '">' . esc_html__( 'Request password reset', 'authvault' ) . '</a></p>';
+		}
+
+		return authvault_get_reset_confirm_form(
+			array(
+				'rp_key'   => $key,
+				'rp_login' => $login,
+			),
+			false
+		);
 	}
 
 	/**

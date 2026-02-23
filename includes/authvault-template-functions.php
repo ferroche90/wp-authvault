@@ -135,9 +135,11 @@ function authvault_get_register_form( array $args = array(), $echo = true ) {
 /**
  * Get password reset (request) form markup via template.
  *
- * @param array<string, mixed> $args Form settings (show_form_title, form_title_text, show_labels,
- *                                   show_placeholders, submit_button_text, redirect_after_success,
- *                                   show_back_to_login_link, back_to_login_link_text, messages, wrapper_attributes).
+ * @param array<string, mixed> $args Form settings (show_form_title, form_title_text, show_form_description,
+ *                                   form_description, show_email_icon, show_labels, show_placeholders,
+ *                                   username_label, username_placeholder, submit_button_text,
+ *                                   redirect_after_success, show_back_to_login_link, back_to_login_link_text,
+ *                                   messages, wrapper_attributes).
  * @param bool                 $echo Whether to echo (true) or return (false).
  * @return string Empty string if $echo true, else form HTML.
  */
@@ -147,8 +149,13 @@ function authvault_get_reset_form( array $args = array(), $echo = true ) {
 		array(
 			'show_form_title'         => true,
 			'form_title_text'         => __( 'Reset password', 'authvault' ),
+			'show_form_description'   => false,
+			'form_description'        => '',
+			'show_email_icon'         => false,
 			'show_labels'             => true,
-			'show_placeholders'        => true,
+			'show_placeholders'       => true,
+			'username_label'         => __( 'Username or email', 'authvault' ),
+			'username_placeholder'   => __( 'Username or email', 'authvault' ),
 			'submit_button_text'      => __( 'Get new password', 'authvault' ),
 			'redirect_after_success'  => '',
 			'show_back_to_login_link' => true,
