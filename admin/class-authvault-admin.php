@@ -78,7 +78,7 @@ class AuthVault_Admin {
 		wp_enqueue_script(
 			$this->plugin_name . '-admin',
 			authvault_asset_url( 'assets/js/authvault-admin.js' ),
-			array( 'jquery' ),
+			array(),
 			$this->version,
 			true
 		);

@@ -39,11 +39,11 @@ class AuthVault_Security {
 	const RECAPTCHA_VERIFY_URL = 'https://www.google.com/recaptcha/api/siteverify';
 
 	/**
-	 * Minimum score to accept (reCAPTCHA v3).
+	 * Fallback minimum score for reCAPTCHA v3 (used when the option is missing).
 	 *
 	 * @var float
 	 */
-	const RECAPTCHA_MIN_SCORE = 0.5;
+	const RECAPTCHA_MIN_SCORE_FALLBACK = 0.5;
 
 	/**
 	 * Login log table name (without prefix).
@@ -214,8 +214,9 @@ class AuthVault_Security {
 		if ( ! is_array( $json ) || empty( $json['success'] ) ) {
 			return false;
 		}
-		$score = isset( $json['score'] ) && is_numeric( $json['score'] ) ? (float) $json['score'] : 0.0;
-		return $score >= self::RECAPTCHA_MIN_SCORE;
+		$score     = isset( $json['score'] ) && is_numeric( $json['score'] ) ? (float) $json['score'] : 0.0;
+		$min_score = (float) authvault_get_option( 'recaptcha_min_score', self::RECAPTCHA_MIN_SCORE_FALLBACK );
+		return $score >= $min_score;
 	}
 
 	/**

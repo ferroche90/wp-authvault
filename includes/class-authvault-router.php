@@ -404,6 +404,11 @@ class AuthVault_Router {
 	/**
 	 * Redirect logged-in users away from login and register pages.
 	 *
+	 * The destination is controlled by the logged_in_redirect_behavior option:
+	 *  - 'home'      — site home page
+	 *  - 'dashboard' — WordPress admin dashboard (default)
+	 *  - 'page'      — a specific page (logged_in_redirect_page_id)
+	 *
 	 * @return void
 	 */
 	public function protect_auth_pages() {
@@ -413,38 +418,44 @@ class AuthVault_Router {
 
 		$login_page_id    = (int) authvault_get_option( 'login_page_id', 0 );
 		$register_page_id = (int) authvault_get_option( 'register_page_id', 0 );
-		
+
 		if ( 0 >= $login_page_id && 0 >= $register_page_id ) {
 			return;
 		}
 
-		// Allow admins and users who can edit pages to open the login/register page in Elementor editor.
 		$elementor_preview = isset( $_GET['elementor-preview'] ) ? sanitize_text_field( wp_unslash( $_GET['elementor-preview'] ) ) : '';
-		
+
 		if ( current_user_can( 'edit_pages' ) && '' !== $elementor_preview ) {
 			return;
 		}
 
 		$current_page_id = get_queried_object_id();
-		
+
 		if ( 0 >= $current_page_id ) {
 			return;
 		}
-		
+
+		if ( $current_page_id !== $login_page_id && $current_page_id !== $register_page_id ) {
+			return;
+		}
+
+		$behavior     = authvault_get_option( 'logged_in_redirect_behavior', 'dashboard' );
 		$redirect_url = home_url();
-		$login_redirect_page_id = (int) authvault_get_option( 'login_redirect_page_id', 0 );
-		
-		if ( 0 < $login_redirect_page_id ) {
-			$url = get_permalink( $login_redirect_page_id );
-			if ( is_string( $url ) && '' !== $url ) {
-				$redirect_url = $url;
+
+		if ( 'dashboard' === $behavior ) {
+			$redirect_url = admin_url();
+		} elseif ( 'page' === $behavior ) {
+			$page_id = (int) authvault_get_option( 'logged_in_redirect_page_id', 0 );
+			if ( 0 < $page_id ) {
+				$url = get_permalink( $page_id );
+				if ( is_string( $url ) && '' !== $url ) {
+					$redirect_url = $url;
+				}
 			}
 		}
-		
-		if ( $current_page_id === $login_page_id || $current_page_id === $register_page_id ) {
-			wp_safe_redirect( $redirect_url );
-			exit;
-		}
+
+		wp_safe_redirect( $redirect_url );
+		exit;
 	}
 
 	/**
