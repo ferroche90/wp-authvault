@@ -94,17 +94,34 @@ class AuthVault_Public {
 	 * @return string HTML output.
 	 */
 	public function shortcode_reset_password_confirm( $atts = array() ) {
+		$atts   = shortcode_atts( array( 'preview' => 'form' ), $atts, 'authvault_reset_password_confirm' );
+		$preview = ( isset( $atts['preview'] ) && 'invalid' === $atts['preview'] ) ? 'invalid' : 'form';
+
 		$key   = isset( $_GET['key'] ) ? sanitize_text_field( wp_unslash( $_GET['key'] ) ) : '';
 		$login = isset( $_GET['login'] ) ? sanitize_user( wp_unslash( $_GET['login'] ), true ) : '';
 
 		if ( '' === $key || '' === $login ) {
-			$reset_page_id = (int) authvault_get_option( 'password_reset_page_id', 0 );
-			$reset_url     = ( 0 < $reset_page_id ) ? get_permalink( $reset_page_id ) : home_url( '/wp-login.php?action=lostpassword' );
-			if ( ! is_string( $reset_url ) || '' === $reset_url ) {
-				$reset_url = home_url();
+			if ( authvault_is_elementor_editor_or_preview() ) {
+				if ( 'invalid' === $preview ) {
+					$reset_page_id = (int) authvault_get_option( 'password_reset_page_id', 0 );
+					$reset_url     = ( 0 < $reset_page_id ) ? get_permalink( $reset_page_id ) : home_url( '/wp-login.php?action=lostpassword' );
+					if ( ! is_string( $reset_url ) || '' === $reset_url ) {
+						$reset_url = home_url();
+					}
+					$msg = authvault_get_message( 'msg_confirm_invalid_link', __( 'This link is invalid or has expired. Please request a new password reset.', 'authvault' ) );
+					return '<p class="authvault-reset-confirm-invalid-link">' . esc_html( $msg ) . ' <a href="' . esc_url( $reset_url ) . '">' . esc_html__( 'Request password reset', 'authvault' ) . '</a></p>';
+				}
+				$key   = '__authvault_preview__';
+				$login = '__authvault_preview__';
+			} else {
+				$reset_page_id = (int) authvault_get_option( 'password_reset_page_id', 0 );
+				$reset_url     = ( 0 < $reset_page_id ) ? get_permalink( $reset_page_id ) : home_url( '/wp-login.php?action=lostpassword' );
+				if ( ! is_string( $reset_url ) || '' === $reset_url ) {
+					$reset_url = home_url();
+				}
+				$msg = authvault_get_message( 'msg_confirm_invalid_link', __( 'This link is invalid or has expired. Please request a new password reset.', 'authvault' ) );
+				return '<p class="authvault-reset-confirm-invalid-link">' . esc_html( $msg ) . ' <a href="' . esc_url( $reset_url ) . '">' . esc_html__( 'Request password reset', 'authvault' ) . '</a></p>';
 			}
-			$msg = authvault_get_message( 'msg_confirm_invalid_link', __( 'This link is invalid or has expired. Please request a new password reset.', 'authvault' ) );
-			return '<p class="authvault-reset-confirm-invalid-link">' . esc_html( $msg ) . ' <a href="' . esc_url( $reset_url ) . '">' . esc_html__( 'Request password reset', 'authvault' ) . '</a></p>';
 		}
 
 		$confirm_errors = \AuthVault\AuthVault_Auth::get_confirm_errors();

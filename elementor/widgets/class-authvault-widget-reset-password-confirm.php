@@ -152,6 +152,20 @@ class AuthVault_Widget_Reset_Password_Confirm extends Widget_Base {
 			)
 		);
 
+		$this->add_control(
+			'editor_preview_state',
+			array(
+				'label'       => __( 'Editor preview', 'authvault' ),
+				'type'        => Controls_Manager::SELECT,
+				'default'     => 'form',
+				'options'     => array(
+					'form'        => __( 'Set new password form', 'authvault' ),
+					'invalid_link' => __( 'Invalid link message', 'authvault' ),
+				),
+				'description' => __( 'Choose what to show in the editor so you can style it. Visitors always see the real form or invalid-link message based on their URL.', 'authvault' ),
+			)
+		);
+
 		$this->end_controls_section();
 	}
 
@@ -466,6 +480,47 @@ class AuthVault_Widget_Reset_Password_Confirm extends Widget_Base {
 		);
 		$this->end_controls_section();
 
+		// Invalid link.
+		$this->start_controls_section(
+			'section_style_invalid_link',
+			array(
+				'label' => __( 'Invalid link', 'authvault' ),
+				'tab'   => Controls_Manager::TAB_STYLE,
+			)
+		);
+		$this->add_group_control(
+			Group_Control_Typography::get_type(),
+			array(
+				'name'     => 'invalid_link_typography',
+				'selector' => '{{WRAPPER}} .authvault-reset-confirm-invalid-link',
+			)
+		);
+		$this->add_control(
+			'invalid_link_color',
+			array(
+				'label'     => __( 'Text color', 'authvault' ),
+				'type'      => Controls_Manager::COLOR,
+				'selectors' => array( '{{WRAPPER}} .authvault-reset-confirm-invalid-link' => 'color: {{VALUE}};' ),
+			)
+		);
+		$this->add_control(
+			'invalid_link_link_color',
+			array(
+				'label'     => __( 'Link color', 'authvault' ),
+				'type'      => Controls_Manager::COLOR,
+				'selectors' => array( '{{WRAPPER}} .authvault-reset-confirm-invalid-link a' => 'color: {{VALUE}};' ),
+			)
+		);
+		$this->add_control(
+			'invalid_link_link_color_hover',
+			array(
+				'label'     => __( 'Link color (hover)', 'authvault' ),
+				'type'      => Controls_Manager::COLOR,
+				'selectors' => array( '{{WRAPPER}} .authvault-reset-confirm-invalid-link a:hover' => 'color: {{VALUE}};' ),
+			)
+		);
+		$this->end_controls_section();
+
 		// Strength Meter.
 		$this->start_controls_section(
 			'section_style_strength',
@@ -541,6 +596,9 @@ class AuthVault_Widget_Reset_Password_Confirm extends Widget_Base {
 	protected function render() {
 		$settings = $this->get_settings_for_display();
 
+		$preview_key   = '__authvault_preview__';
+		$preview_login = '__authvault_preview__';
+
 		$key   = isset( $_GET['key'] ) ? sanitize_text_field( wp_unslash( $_GET['key'] ) ) : '';
 		$login = isset( $_GET['login'] ) ? sanitize_user( wp_unslash( $_GET['login'] ), true ) : '';
 
@@ -562,10 +620,17 @@ class AuthVault_Widget_Reset_Password_Confirm extends Widget_Base {
 		);
 
 		$this->add_render_attribute( 'wrapper', 'class', 'authvault-form-wrapper authvault-elementor-reset-password-confirm' );
+
+		$in_editor = authvault_is_elementor_editor_or_preview();
+		$show_invalid = ( '' === $key || '' === $login ) && ( ! $in_editor || ( $in_editor && 'invalid_link' === $settings['editor_preview_state'] ) );
+		if ( $in_editor && ( '' === $key || '' === $login ) ) {
+			$args['rp_key']   = $preview_key;
+			$args['rp_login'] = $preview_login;
+		}
 		?>
 		<div <?php $this->print_render_attribute_string( 'wrapper' ); ?>>
 			<?php
-			if ( '' === $key || '' === $login ) {
+			if ( $show_invalid ) {
 				$reset_page_id = (int) authvault_get_option( 'password_reset_page_id', 0 );
 				$reset_url     = ( 0 < $reset_page_id ) ? get_permalink( $reset_page_id ) : home_url( '/wp-login.php?action=lostpassword' );
 				if ( ! is_string( $reset_url ) || '' === $reset_url ) {
