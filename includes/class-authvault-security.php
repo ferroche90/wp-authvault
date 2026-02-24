@@ -265,19 +265,44 @@ class AuthVault_Security {
 	 * @return string
 	 */
 	public function filter_site_url_wp_login( $url, $path, $scheme, $blog_id = null ) {
-		if ( ! authvault_get_option( 'enable_login_url_hiding', false ) ) {
-			return $url;
-		}
 		if ( ! is_string( $path ) ) {
 			return $url;
 		}
 		if ( strpos( $path, 'wp-login.php' ) === false ) {
 			return $url;
 		}
-		if ( strpos( $path, 'admin-ajax.php' ) !== false ) {
+
+		// Password reset confirm links must always rewrite to the confirm page
+		// (regardless of whether login URL hiding is enabled), because on
+		// single-site installs the network_site_url filter never fires.
+		if ( strpos( $path, 'action=rp' ) !== false || strpos( $path, 'action=resetpass' ) !== false ) {
+			$confirm_page_id = (int) authvault_get_option( 'password_reset_confirm_page_id', 0 );
+			if ( 0 < $confirm_page_id ) {
+				$confirm_url = get_permalink( $confirm_page_id );
+				if ( is_string( $confirm_url ) && '' !== $confirm_url ) {
+					$query_string = wp_parse_url( $path, PHP_URL_QUERY );
+					if ( is_string( $query_string ) && '' !== $query_string ) {
+						$query_vars = array();
+						wp_parse_str( $query_string, $query_vars );
+						if ( ! empty( $query_vars['key'] ) && ! empty( $query_vars['login'] ) ) {
+							return add_query_arg(
+								array(
+									'key'   => $query_vars['key'],
+									'login' => $query_vars['login'],
+								),
+								$confirm_url
+							);
+						}
+					}
+				}
+			}
 			return $url;
 		}
-		if ( strpos( $path, 'action=rp' ) !== false || strpos( $path, 'action=resetpass' ) !== false ) {
+
+		if ( ! authvault_get_option( 'enable_login_url_hiding', false ) ) {
+			return $url;
+		}
+		if ( strpos( $path, 'admin-ajax.php' ) !== false ) {
 			return $url;
 		}
 		$parsed = wp_parse_url( $url );
