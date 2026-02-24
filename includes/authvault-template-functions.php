@@ -218,6 +218,7 @@ function authvault_get_reset_form( array $args = array(), $echo = true ) {
 function authvault_get_reset_confirm_form( array $args = array(), $echo = true ) {
 	$min_len = (int) authvault_get_option( 'min_password_length', 8 );
 	$min_len = max( 1, min( 128, $min_len ) );
+	$allow_weak = (bool) authvault_get_option( 'allow_weak_passwords', false );
 
 	$args = array_merge(
 		array(
@@ -233,6 +234,7 @@ function authvault_get_reset_confirm_form( array $args = array(), $echo = true )
 			'rp_key'               => '',
 			'rp_login'             => '',
 			'min_password_length'  => $min_len,
+			'allow_weak_passwords' => $allow_weak,
 			'generated_password'   => wp_generate_password( 24, true, true ),
 			'messages'             => array(),
 			'wrapper_attributes'   => array(),

@@ -97,7 +97,8 @@ class AuthVault_Options {
 			'max_login_attempts'             => 5,
 			'lockout_duration_minutes'       => 15,
 			'min_password_length'            => 8,
-			'reset_rate_limit_max'           => 5,
+			'allow_weak_passwords'            => false,
+			'reset_rate_limit_max'            => 5,
 			'reset_rate_limit_window_minutes' => 15,
 			'recaptcha_enabled'              => false,
 			'recaptcha_site_key'             => '',
@@ -129,6 +130,7 @@ class AuthVault_Options {
 			'msg_confirm_password_empty'     => '',
 			'msg_confirm_password_mismatch'  => '',
 			'msg_confirm_password_weak'      => '',
+			'msg_confirm_password_too_weak'   => '',
 		);
 	}
 }

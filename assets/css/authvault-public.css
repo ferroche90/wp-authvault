@@ -10,11 +10,11 @@
    ------------------------------------------------------------------------- */
 .authvault-form-wrapper,
 .authvault-form {
-	--authvault-color-bg: #fff;
+	--authvault-color-bg: #f8fafc;
 	--authvault-color-bg-input: #fff;
-	--authvault-color-border: #d1d5db;
-	--authvault-color-text: #1f2937;
-	--authvault-color-text-muted: #6b7280;
+	--authvault-color-border: #e2e8f0;
+	--authvault-color-text: #0f172a;
+	--authvault-color-text-muted: #64748b;
 	--authvault-color-primary: #2563eb;
 	--authvault-color-primary-hover: #1d4ed8;
 	--authvault-color-link: #2563eb;
@@ -22,6 +22,7 @@
 	--authvault-color-focus: #2563eb;
 	--authvault-color-error: #dc2626;
 	--authvault-color-success: #059669;
+	--authvault-color-accent: #f1f5f9;
 	--authvault-space-xs: 0.25rem;
 	--authvault-space-sm: 0.5rem;
 	--authvault-space-md: 1rem;
@@ -30,8 +31,8 @@
 	--authvault-radius-sm: 4px;
 	--authvault-radius-md: 6px;
 	--authvault-radius-lg: 8px;
-	--authvault-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-	--authvault-input-height: 2.75rem;
+	--authvault-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+	--authvault-input-height: 2.5rem;
 	--authvault-font-sans: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
 	--authvault-font-size-base: 1rem;
 	--authvault-font-size-sm: 0.875rem;
@@ -42,28 +43,41 @@
    Form container (BEM: .authvault-form, .authvault-form--login, etc.)
    ------------------------------------------------------------------------- */
 .authvault-form {
-	background: var(--authvault-color-bg);
+	background: var(--authvault-color-bg-input);
+	border: 1px solid var(--authvault-color-border);
 	border-radius: var(--authvault-radius-lg);
 	box-shadow: var(--authvault-shadow);
 	font-family: var(--authvault-font-sans);
 	font-size: var(--authvault-font-size-base);
 	color: var(--authvault-color-text);
 	padding: var(--authvault-space-xl);
-	max-width: 24rem;
+	max-width: 420px;
 	margin-left: auto;
 	margin-right: auto;
+	box-sizing: border-box;
+	overflow: hidden;
+}
+
+.authvault-form *,
+.authvault-form *::before,
+.authvault-form *::after {
+	box-sizing: border-box;
 }
 
 .authvault-form__title {
-	margin: 0 0 var(--authvault-space-lg);
+	margin: 0 0 var(--authvault-space-xs);
 	font-size: var(--authvault-font-size-title);
 	font-weight: 600;
-	line-height: 1.3;
+	line-height: 2rem;
+	letter-spacing: -0.025em;
 	color: var(--authvault-color-text);
 }
 
 .authvault-form__inner {
-	display: block;
+	display: flex;
+	flex-direction: column;
+	gap: var(--authvault-space-md);
+	margin: 0;
 }
 
 .authvault-fieldset {
@@ -71,6 +85,9 @@
 	margin: 0;
 	padding: 0;
 	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--authvault-space-md);
 }
 
 /* -------------------------------------------------------------------------
@@ -80,52 +97,54 @@
 	display: flex;
 	flex-direction: column;
 	gap: var(--authvault-space-sm);
+	padding-bottom: var(--authvault-space-md);
 }
 
 .authvault-messages__item {
 	margin: 0;
 	font-size: var(--authvault-font-size-sm);
-	line-height: 1.5;
-	padding: var(--authvault-space-sm) var(--authvault-space-md);
+	line-height: 1.35;
+	font-weight: 400;
+	padding: 0.75rem var(--authvault-space-md);
 	border-radius: var(--authvault-radius-md);
-	border-left: 3px solid var(--authvault-color-border);
+	border: 1px solid var(--authvault-color-border);
 	background: var(--authvault-color-bg-input);
 	color: var(--authvault-color-text);
 }
 
 .authvault-messages__item--error {
-	border-left-color: var(--authvault-color-error);
-	background: #fef2f2;
-	color: var(--authvault-color-error);
+	border-color: rgb(220 38 38 / 0.3);
+	background: rgb(220 38 38 / 0.08);
+	color: #b91c1c;
 }
 
 .authvault-messages__item--success {
-	border-left-color: var(--authvault-color-success);
-	background: #ecfdf5;
-	color: var(--authvault-color-success);
+	border-color: rgb(5 150 105 / 0.3);
+	background: rgb(5 150 105 / 0.08);
+	color: #047857;
 }
 
 .authvault-messages__item--info {
-	border-left-color: var(--authvault-color-primary);
-	background: #eff6ff;
-	color: var(--authvault-color-primary);
+	border-color: rgb(37 99 235 / 0.3);
+	background: rgb(37 99 235 / 0.08);
+	color: #1d4ed8;
 }
 
 /* -------------------------------------------------------------------------
    Fields (BEM: .authvault-field, .authvault-field__label, .authvault-field__input)
    ------------------------------------------------------------------------- */
 .authvault-field {
-	margin-bottom: var(--authvault-space-lg);
-}
-
-.authvault-field:last-of-type {
-	margin-bottom: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0;
+	margin: 0;
 }
 
 .authvault-field__label {
-	display: block;
-	margin-bottom: var(--authvault-space-xs);
+	display: inline-block;
+	margin: 0 0 var(--authvault-space-sm);
 	font-size: var(--authvault-font-size-sm);
+	line-height: 1;
 	font-weight: 500;
 	color: var(--authvault-color-text);
 }
@@ -136,29 +155,33 @@
 	gap: var(--authvault-space-sm);
 	font-weight: 400;
 	cursor: pointer;
+	margin: 0;
 }
 
 .authvault-field__input {
 	display: block;
 	width: 100%;
 	height: var(--authvault-input-height);
-	padding: 0 var(--authvault-space-md);
+	padding: 0.5rem 0.75rem;
 	font-family: inherit;
-	font-size: var(--authvault-font-size-base);
+	font-size: var(--authvault-font-size-sm);
+	line-height: 1.25rem;
 	color: var(--authvault-color-text);
-	background: var(--authvault-color-bg-input);
+	background: var(--authvault-color-bg);
 	border: 1px solid var(--authvault-color-border);
 	border-radius: var(--authvault-radius-md);
 	box-sizing: border-box;
+	outline: none;
+	box-shadow: none;
 	transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .authvault-field__input::placeholder {
 	color: var(--authvault-color-text-muted);
+	opacity: 1;
 }
 
 .authvault-field__input:focus {
-	outline: 0;
 	border-color: var(--authvault-color-focus);
 	box-shadow: 0 0 0 3px rgb(37 99 235 / 0.15);
 }
@@ -178,23 +201,30 @@
 	align-items: center;
 	justify-content: center;
 	width: 100%;
-	min-height: var(--authvault-input-height);
-	padding: 0 var(--authvault-space-lg);
+	height: var(--authvault-input-height);
+	padding: 0.5rem var(--authvault-space-md);
 	font-family: inherit;
-	font-size: var(--authvault-font-size-base);
+	font-size: var(--authvault-font-size-sm);
 	font-weight: 500;
+	line-height: 1.25rem;
 	color: #fff;
 	background: var(--authvault-color-primary);
-	border: 0;
+	border: 1px solid transparent;
 	border-radius: var(--authvault-radius-md);
 	cursor: pointer;
-	transition: background-color 0.15s ease, color 0.15s ease;
+	text-transform: none;
+	box-shadow: none;
+	transition: background-color 0.15s ease, transform 0.05s ease, opacity 0.15s ease;
 	-webkit-appearance: none;
 	appearance: none;
 }
 
 .authvault-submit:hover {
-	background: var(--authvault-color-primary-hover);
+	background: rgb(37 99 235 / 0.9);
+}
+
+.authvault-submit:active {
+	transform: translateY(1px);
 }
 
 .authvault-submit:focus {
@@ -202,8 +232,13 @@
 	box-shadow: 0 0 0 3px rgb(37 99 235 / 0.25);
 }
 
+.authvault-submit:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
 .authvault-field--submit {
-	margin-top: var(--authvault-space-lg);
+	margin-top: 0;
 }
 
 /* -------------------------------------------------------------------------
@@ -246,25 +281,33 @@
 
 .authvault-toggle-password {
 	position: absolute;
-	right: var(--authvault-space-sm);
+	right: 0.25rem;
 	top: 50%;
 	transform: translateY(-50%);
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: 2rem;
-	height: 2rem;
+	width: 2.25rem;
+	height: 2.25rem;
 	padding: 0;
 	border: 0;
 	background: transparent;
 	color: var(--authvault-color-text-muted);
 	cursor: pointer;
-	border-radius: var(--authvault-radius-sm);
-	transition: color 0.15s ease;
+	border-radius: var(--authvault-radius-md);
+	transition: color 0.15s ease, background 0.15s ease;
 }
 
 .authvault-toggle-password:hover {
 	color: var(--authvault-color-text);
+	background: var(--authvault-color-accent);
+}
+
+.authvault-toggle-password svg {
+	width: 1rem;
+	height: 1rem;
+	display: block;
+	flex-shrink: 0;
 }
 
 .authvault-toggle-password .authvault-icon-eye {
@@ -298,65 +341,81 @@
    ------------------------------------------------------------------------- */
 .authvault-strength {
 	display: flex;
-	align-items: center;
-	gap: var(--authvault-space-sm);
-	margin-top: var(--authvault-space-sm);
-	margin-bottom: var(--authvault-space-sm);
+	align-items: baseline;
+	gap: 0.75rem;
+	margin-top: 0.25rem;
+	margin-bottom: 0.75rem;
 }
 
 .authvault-strength__bar {
+	display: flex;
 	flex: 1;
-	height: 6px;
-	background: var(--authvault-color-border);
-	border-radius: 3px;
+	height: 0.5rem;
+	background: hsl(220 14% 88%);
+	border-radius: 9999px;
 	overflow: hidden;
+	min-width: 0;
 }
 
 .authvault-strength__fill {
+	display: block;
 	height: 100%;
 	width: 0;
-	border-radius: 3px;
-	transition: width 0.3s ease, background-color 0.3s ease;
+	min-width: 0;
+	flex-shrink: 0;
+	border-radius: 9999px;
+	transition: width 0.3s ease, background-color 0.25s ease;
 }
 
 .authvault-strength__fill--very-weak {
-	background-color: #dc2626;
+	background-color: hsl(0 72% 51%);
 }
 
 .authvault-strength__fill--weak {
-	background-color: #ea580c;
+	background-color: hsl(38 92% 48%);
 }
 
-.authvault-strength__fill--medium {
-	background-color: #ca8a04;
+.authvault-strength__fill--medium,
+.authvault-strength__fill--moderate {
+	background-color: hsl(45 93% 47%);
 }
 
 .authvault-strength__fill--strong {
-	background-color: #059669;
+	background-color: hsl(142 71% 38%);
 }
 
 .authvault-strength__label {
-	font-size: 0.75rem;
-	font-weight: 500;
-	min-width: 5rem;
+	display: inline-block;
+	height: auto;
+	flex-shrink: 0;
+	font-size: 0.8125rem;
+	line-height: 1;
+	font-weight: 600;
+	min-width: 2.5rem;
 	text-align: right;
 	white-space: nowrap;
 }
 
+.authvault-strength__label--empty {
+	color: var(--authvault-color-text-muted);
+	font-weight: 500;
+}
+
 .authvault-strength__label--very-weak {
-	color: #dc2626;
+	color: hsl(0 72% 38%);
 }
 
 .authvault-strength__label--weak {
-	color: #ea580c;
+	color: hsl(38 72% 35%);
 }
 
-.authvault-strength__label--medium {
-	color: #ca8a04;
+.authvault-strength__label--medium,
+.authvault-strength__label--moderate {
+	color: hsl(45 80% 32%);
 }
 
 .authvault-strength__label--strong {
-	color: #059669;
+	color: hsl(142 71% 28%);
 }
 
 /* -------------------------------------------------------------------------
@@ -364,14 +423,14 @@
    ------------------------------------------------------------------------- */
 .authvault-weak-message {
 	display: none;
-	margin: 0 0 var(--authvault-space-sm);
-	padding: var(--authvault-space-sm) var(--authvault-space-md);
+	margin: 0;
+	padding: 0.625rem 0.75rem;
 	font-size: 0.8125rem;
-	line-height: 1.5;
-	color: var(--authvault-color-error);
-	background: #fef2f2;
-	border-left: 3px solid var(--authvault-color-error);
-	border-radius: var(--authvault-radius-sm);
+	line-height: 1.35;
+	border-radius: var(--authvault-radius-md);
+	background: rgb(220 38 38 / 0.1);
+	border: 1px solid rgb(220 38 38 / 0.35);
+	color: hsl(0 65% 35%);
 }
 
 .authvault-weak-message--visible {
@@ -382,9 +441,10 @@
    Hint text
    ------------------------------------------------------------------------- */
 .authvault-hint {
-	margin: 0 0 var(--authvault-space-md);
+	margin: -0.25rem;
+	padding: 0 0.25rem;
 	font-size: 0.8125rem;
-	line-height: 1.5;
+	line-height: 1.35;
 	color: var(--authvault-color-text-muted);
 }
 
@@ -396,25 +456,31 @@
 	align-items: center;
 	justify-content: center;
 	width: 100%;
-	min-height: 2.25rem;
-	padding: 0 var(--authvault-space-md);
+	height: var(--authvault-input-height);
+	padding: 0.5rem var(--authvault-space-md);
 	font-family: inherit;
 	font-size: var(--authvault-font-size-sm);
 	font-weight: 500;
-	color: var(--authvault-color-primary);
-	background: transparent;
-	border: 1px solid var(--authvault-color-primary);
+	line-height: 1.25rem;
+	color: var(--authvault-color-text);
+	background: var(--authvault-color-bg-input);
+	border: 1px solid var(--authvault-color-border);
 	border-radius: var(--authvault-radius-md);
 	cursor: pointer;
-	transition: background-color 0.15s ease, color 0.15s ease;
-	margin-bottom: var(--authvault-space-sm);
+	text-transform: none;
+	box-shadow: none;
+	transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.05s ease;
 	-webkit-appearance: none;
 	appearance: none;
 }
 
 .authvault-generate:hover {
-	background: var(--authvault-color-primary);
-	color: #fff;
+	background: var(--authvault-color-accent);
+	border-color: var(--authvault-color-border);
+}
+
+.authvault-generate:active {
+	transform: translateY(1px);
 }
 
 .authvault-generate:focus {
@@ -442,8 +508,14 @@
 }
 
 /* -------------------------------------------------------------------------
-   Responsive: larger spacing on wider viewports
+   Responsive
    ------------------------------------------------------------------------- */
+@media (max-width: 480px) {
+	.authvault-form {
+		padding: 1.25rem;
+	}
+}
+
 @media (min-width: 480px) {
 	.authvault-form {
 		padding: var(--authvault-space-xl);

@@ -66,6 +66,8 @@
 		fill.style.width = STRENGTH_WIDTHS[idx];
 		label.textContent = getStrengthLabels()[idx];
 		label.className   = 'authvault-strength__label authvault-strength__label--' + STRENGTH_CLASSES[idx];
+		// Remove empty-state class when we have a score.
+		label.classList.remove('authvault-strength__label--empty');
 
 		if (warn) {
 			if (score < 3) {
@@ -83,44 +85,89 @@
 		}
 	}
 
+	function hasMeter() {
+		return typeof wp !== 'undefined' && wp.passwordStrength && typeof wp.passwordStrength.meter === 'function';
+	}
+
 	function initStrengthMeter() {
 		var passInput = document.getElementById('authvault-reset-pass1');
 		if (!passInput) {
 			return;
 		}
 
-		var hasMeter = typeof wp !== 'undefined' && wp.passwordStrength && wp.passwordStrength.meter;
+		var form = document.getElementById('authvault-reset-confirm-form');
+		var allowWeak = form && form.dataset.allowWeakPasswords === '1';
+		var strengthInput = form ? form.querySelector('input[name="authvault_password_strength"]') : null;
+		var submitBtn = document.getElementById('authvault-confirm-submit');
+
+		function resetMeter() {
+			var fill  = document.getElementById('authvault-strength-fill');
+			var label = document.getElementById('authvault-strength-label');
+			if (fill) {
+				fill.style.width = '0';
+				fill.className = 'authvault-strength__fill';
+			}
+			if (label) {
+				var placeholder = (form && form.dataset.strengthPlaceholder) ? form.dataset.strengthPlaceholder : '—';
+				label.textContent = placeholder;
+				label.className = 'authvault-strength__label authvault-strength__label--empty';
+			}
+			var warn = document.getElementById('authvault-weak-message');
+			if (warn) {
+				warn.classList.remove('authvault-weak-message--visible');
+			}
+		}
+
+		function updateSubmitState(score) {
+			if (strengthInput) {
+				strengthInput.value = String(score);
+			}
+			if (!allowWeak && submitBtn) {
+				submitBtn.disabled = score < 3;
+			}
+		}
 
 		function evaluate() {
 			var val = passInput.value;
 			syncPass2(val);
 
-			if (!hasMeter || val.length === 0) {
-				var fill  = document.getElementById('authvault-strength-fill');
-				var label = document.getElementById('authvault-strength-label');
-				if (fill) {
-					fill.style.width = '0';
-					fill.className = 'authvault-strength__fill';
-				}
-				if (label) {
-					label.textContent = '';
-				}
-				var warn = document.getElementById('authvault-weak-message');
-				if (warn) {
-					warn.classList.remove('authvault-weak-message--visible');
-				}
+			if (val.length === 0) {
+				resetMeter();
+				updateSubmitState(0);
+				return;
+			}
+
+			if (!hasMeter()) {
 				return;
 			}
 
 			var score = wp.passwordStrength.meter(val, [], val);
 			updateStrengthMeter(score);
+			updateSubmitState(score);
 		}
 
 		passInput.addEventListener('input', evaluate);
 		passInput.addEventListener('change', evaluate);
 
+		if (!allowWeak && submitBtn) {
+			submitBtn.disabled = true;
+		}
+
 		if (passInput.value.length > 0) {
-			evaluate();
+			if (hasMeter()) {
+				evaluate();
+			} else {
+				var attempts = 0;
+				var poll = setInterval(function () {
+					attempts++;
+					if (hasMeter()) {
+						clearInterval(poll);
+						evaluate();
+					} else if (attempts >= 50) {
+						clearInterval(poll);
+					}
+				}, 200);
+			}
 		}
 	}
 

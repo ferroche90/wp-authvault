@@ -417,6 +417,18 @@ class AuthVault_Auth {
 			return;
 		}
 
+		$allow_weak = (bool) authvault_get_option( 'allow_weak_passwords', false );
+		if ( ! $allow_weak ) {
+			$strength = isset( $_POST['authvault_password_strength'] ) ? (int) $_POST['authvault_password_strength'] : -1;
+			if ( $strength < 3 ) {
+				self::$confirm_errors[] = array(
+					'type' => 'error',
+					'text' => authvault_get_message( 'msg_confirm_password_too_weak', __( 'Please choose a stronger password. Use a mix of upper and lower case letters, numbers, and symbols.', 'authvault' ) ),
+				);
+				return;
+			}
+		}
+
 		reset_password( $user, $pass1 );
 
 		$login_page_id = (int) authvault_get_option( 'login_page_id', 0 );

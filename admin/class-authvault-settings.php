@@ -260,6 +260,19 @@ class AuthVault_Settings {
 		);
 
 		add_settings_field(
+			'allow_weak_passwords',
+			__( 'Allow weak passwords', 'authvault' ),
+			array( $this, 'render_checkbox' ),
+			self::PAGE_SLUG,
+			'authvault_security',
+			array(
+				'label_for' => 'authvault_allow_weak_passwords',
+				'key'       => 'allow_weak_passwords',
+				'description' => __( 'If unchecked, the set-new-password form only accepts medium or strong passwords (weak and very weak are blocked).', 'authvault' ),
+			)
+		);
+
+		add_settings_field(
 			'reset_rate_limit_max',
 			__( 'Max password reset requests per IP', 'authvault' ),
 			array( $this, 'render_number_field' ),
@@ -401,6 +414,7 @@ class AuthVault_Settings {
 			'msg_confirm_password_empty'    => __( 'Confirm page: empty password', 'authvault' ),
 			'msg_confirm_password_mismatch' => __( 'Confirm page: passwords do not match', 'authvault' ),
 			'msg_confirm_password_weak'     => __( 'Confirm page: password too short (%d = length)', 'authvault' ),
+			'msg_confirm_password_too_weak'   => __( 'Confirm page: password too weak (require medium or strong)', 'authvault' ),
 		);
 
 		foreach ( $message_fields as $key => $label ) {
@@ -496,6 +510,7 @@ class AuthVault_Settings {
 		$output['enable_lockout']          = isset( $input['enable_lockout'] );
 		$output['min_password_length']     = isset( $input['min_password_length'] ) ? absint( $input['min_password_length'] ) : $defaults['min_password_length'];
 		$output['min_password_length']     = max( 1, min( 128, $output['min_password_length'] ) );
+		$output['allow_weak_passwords']    = isset( $input['allow_weak_passwords'] );
 		$output['reset_rate_limit_max']    = isset( $input['reset_rate_limit_max'] ) ? absint( $input['reset_rate_limit_max'] ) : $defaults['reset_rate_limit_max'];
 		$output['reset_rate_limit_max']    = max( 1, min( 100, $output['reset_rate_limit_max'] ) );
 		$output['reset_rate_limit_window_minutes'] = isset( $input['reset_rate_limit_window_minutes'] ) ? absint( $input['reset_rate_limit_window_minutes'] ) : $defaults['reset_rate_limit_window_minutes'];
@@ -523,6 +538,7 @@ class AuthVault_Settings {
 			'msg_confirm_password_empty',
 			'msg_confirm_password_mismatch',
 			'msg_confirm_password_weak',
+			'msg_confirm_password_too_weak',
 		);
 		foreach ( $message_keys as $mk ) {
 			$output[ $mk ] = isset( $input[ $mk ] ) ? sanitize_text_field( $input[ $mk ] ) : $defaults[ $mk ];
@@ -683,11 +699,14 @@ class AuthVault_Settings {
 	 * @return void
 	 */
 	public function render_checkbox( array $args ) {
-		$key   = $args['key'];
-		$id    = isset( $args['label_for'] ) ? $args['label_for'] : 'authvault_' . $key;
-		$value = authvault_get_option( $key, false );
+		$key    = $args['key'];
+		$id     = isset( $args['label_for'] ) ? $args['label_for'] : 'authvault_' . $key;
+		$value  = authvault_get_option( $key, false );
 		$checked = $value ? ' checked="checked"' : '';
 		echo '<input type="checkbox" id="' . esc_attr( $id ) . '" name="' . esc_attr( self::OPTION_NAME . '[' . $key . ']' ) . '" value="1"' . $checked . ' />';
+		if ( ! empty( $args['description'] ) ) {
+			echo '<p class="description">' . esc_html( $args['description'] ) . '</p>';
+		}
 	}
 
 	/**

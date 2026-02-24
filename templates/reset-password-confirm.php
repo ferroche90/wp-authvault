@@ -16,6 +16,7 @@
  * @var string $rp_key
  * @var string $rp_login
  * @var int    $min_password_length
+ * @var bool   $allow_weak_passwords
  * @var string $generated_password
  * @var array  $messages
  * @var array  $wrapper_attributes
@@ -31,8 +32,9 @@ if ( ! empty( $wrapper_attr['class'] ) ) {
 	$wrapper_class .= ' ' . ( is_array( $wrapper_attr['class'] ) ? implode( ' ', $wrapper_attr['class'] ) : $wrapper_attr['class'] );
 }
 
-$min_len   = isset( $min_password_length ) ? (int) $min_password_length : 8;
-$generated = isset( $generated_password ) ? $generated_password : '';
+$min_len     = isset( $min_password_length ) ? (int) $min_password_length : 8;
+$allow_weak  = isset( $allow_weak_passwords ) ? (bool) $allow_weak_passwords : false;
+$generated   = isset( $generated_password ) ? $generated_password : '';
 ?>
 <div class="<?php echo esc_attr( $wrapper_class ); ?>" <?php echo authvault_attributes_string( $wrapper_attr, array( 'class' ) ); ?>>
 	<?php if ( ! empty( $messages ) && is_array( $messages ) ) : ?>
@@ -64,12 +66,13 @@ $generated = isset( $generated_password ) ? $generated_password : '';
 		<p class="authvault-form__desc authvault-form-desc"><?php echo esc_html( $form_description ); ?></p>
 	<?php endif; ?>
 
-	<form class="authvault-form__inner" method="post" action="" novalidate autocomplete="off" id="authvault-reset-confirm-form">
+	<form class="authvault-form__inner" method="post" action="" novalidate autocomplete="off" id="authvault-reset-confirm-form" data-allow-weak-passwords="<?php echo $allow_weak ? '1' : '0'; ?>" data-strength-placeholder="<?php echo esc_attr__( '—', 'authvault' ); ?>">
 		<input type="hidden" name="authvault_action" value="authvault_reset_confirm" />
 		<?php wp_nonce_field( 'authvault_reset_confirm', 'authvault_reset_confirm_nonce' ); ?>
 		<input type="hidden" name="rp_key" value="<?php echo esc_attr( $rp_key ); ?>" />
 		<input type="hidden" name="rp_login" value="<?php echo esc_attr( $rp_login ); ?>" />
 		<input type="hidden" name="pass2" id="authvault-reset-pass2" value="" />
+		<input type="hidden" name="authvault_password_strength" id="authvault-password-strength" value="0" />
 
 		<fieldset class="authvault-fieldset">
 			<div class="authvault-field authvault-field--pass1">
@@ -101,7 +104,7 @@ $generated = isset( $generated_password ) ? $generated_password : '';
 					<div class="authvault-strength__bar">
 						<div class="authvault-strength__fill" id="authvault-strength-fill"></div>
 					</div>
-					<span class="authvault-strength__label" id="authvault-strength-label" aria-live="polite"></span>
+					<span class="authvault-strength__label authvault-strength__label--empty" id="authvault-strength-label" aria-live="polite">—</span>
 				</div>
 
 				<p class="authvault-weak-message" id="authvault-weak-message" role="alert" aria-live="polite">
