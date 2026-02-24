@@ -277,6 +277,23 @@
 	width: 1rem;
 	height: 1rem;
 	display: block;
+	flex-shrink: 0;
+}
+
+.authvault-form-wrapper .authvault-toggle-password .authvault-icon-eye {
+	display: block;
+}
+
+.authvault-form-wrapper .authvault-toggle-password .authvault-icon-eye-off {
+	display: none;
+}
+
+.authvault-form-wrapper .authvault-toggle-password.is-active .authvault-icon-eye {
+	display: none;
+}
+
+.authvault-form-wrapper .authvault-toggle-password.is-active .authvault-icon-eye-off {
+	display: block;
 }
 
 .authvault-form-wrapper .authvault-toggle-password.is-active {
