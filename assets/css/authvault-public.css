@@ -77,25 +77,38 @@
    Messages
    ------------------------------------------------------------------------- */
 .authvault-messages {
-	margin-bottom: var(--authvault-space-lg);
-	padding: var(--authvault-space-md);
-	border-radius: var(--authvault-radius-md);
-	background: var(--authvault-color-bg-input);
-	border: 1px solid var(--authvault-color-border);
+	display: flex;
+	flex-direction: column;
+	gap: var(--authvault-space-sm);
 }
 
 .authvault-messages__item {
 	margin: 0;
 	font-size: var(--authvault-font-size-sm);
+	line-height: 1.5;
+	padding: var(--authvault-space-sm) var(--authvault-space-md);
+	border-radius: var(--authvault-radius-md);
+	border-left: 3px solid var(--authvault-color-border);
+	background: var(--authvault-color-bg-input);
 	color: var(--authvault-color-text);
 }
 
-.authvault-messages--error .authvault-messages__item {
+.authvault-messages__item--error {
+	border-left-color: var(--authvault-color-error);
+	background: #fef2f2;
 	color: var(--authvault-color-error);
 }
 
-.authvault-messages--success .authvault-messages__item {
+.authvault-messages__item--success {
+	border-left-color: var(--authvault-color-success);
+	background: #ecfdf5;
 	color: var(--authvault-color-success);
+}
+
+.authvault-messages__item--info {
+	border-left-color: var(--authvault-color-primary);
+	background: #eff6ff;
+	color: var(--authvault-color-primary);
 }
 
 /* -------------------------------------------------------------------------
@@ -213,6 +226,218 @@
 }
 
 .authvault-form__link:hover {
+	color: var(--authvault-color-link-hover);
+}
+
+/* -------------------------------------------------------------------------
+   Password input wrapper + toggle button
+   ------------------------------------------------------------------------- */
+.authvault-field-password-wrap,
+.authvault-field-input-wrap {
+	position: relative;
+	display: flex;
+	align-items: center;
+}
+
+.authvault-field-password-wrap .authvault-field__input,
+.authvault-field-input-wrap .authvault-field__input {
+	padding-right: 2.75rem;
+}
+
+.authvault-toggle-password {
+	position: absolute;
+	right: var(--authvault-space-sm);
+	top: 50%;
+	transform: translateY(-50%);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--authvault-color-text-muted);
+	cursor: pointer;
+	border-radius: var(--authvault-radius-sm);
+	transition: color 0.15s ease;
+}
+
+.authvault-toggle-password:hover {
+	color: var(--authvault-color-text);
+}
+
+.authvault-toggle-password .authvault-icon-eye {
+	display: block;
+}
+
+.authvault-toggle-password .authvault-icon-eye-off {
+	display: none;
+}
+
+.authvault-toggle-password.is-active .authvault-icon-eye {
+	display: none;
+}
+
+.authvault-toggle-password.is-active .authvault-icon-eye-off {
+	display: block;
+}
+
+/* -------------------------------------------------------------------------
+   Form description
+   ------------------------------------------------------------------------- */
+.authvault-form__desc {
+	margin: 0 0 var(--authvault-space-lg);
+	font-size: var(--authvault-font-size-sm);
+	color: var(--authvault-color-text-muted);
+	line-height: 1.5;
+}
+
+/* -------------------------------------------------------------------------
+   Password strength meter
+   ------------------------------------------------------------------------- */
+.authvault-strength {
+	display: flex;
+	align-items: center;
+	gap: var(--authvault-space-sm);
+	margin-top: var(--authvault-space-sm);
+	margin-bottom: var(--authvault-space-sm);
+}
+
+.authvault-strength__bar {
+	flex: 1;
+	height: 6px;
+	background: var(--authvault-color-border);
+	border-radius: 3px;
+	overflow: hidden;
+}
+
+.authvault-strength__fill {
+	height: 100%;
+	width: 0;
+	border-radius: 3px;
+	transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.authvault-strength__fill--very-weak {
+	background-color: #dc2626;
+}
+
+.authvault-strength__fill--weak {
+	background-color: #ea580c;
+}
+
+.authvault-strength__fill--medium {
+	background-color: #ca8a04;
+}
+
+.authvault-strength__fill--strong {
+	background-color: #059669;
+}
+
+.authvault-strength__label {
+	font-size: 0.75rem;
+	font-weight: 500;
+	min-width: 5rem;
+	text-align: right;
+	white-space: nowrap;
+}
+
+.authvault-strength__label--very-weak {
+	color: #dc2626;
+}
+
+.authvault-strength__label--weak {
+	color: #ea580c;
+}
+
+.authvault-strength__label--medium {
+	color: #ca8a04;
+}
+
+.authvault-strength__label--strong {
+	color: #059669;
+}
+
+/* -------------------------------------------------------------------------
+   Weak password warning
+   ------------------------------------------------------------------------- */
+.authvault-weak-message {
+	display: none;
+	margin: 0 0 var(--authvault-space-sm);
+	padding: var(--authvault-space-sm) var(--authvault-space-md);
+	font-size: 0.8125rem;
+	line-height: 1.5;
+	color: var(--authvault-color-error);
+	background: #fef2f2;
+	border-left: 3px solid var(--authvault-color-error);
+	border-radius: var(--authvault-radius-sm);
+}
+
+.authvault-weak-message--visible {
+	display: block;
+}
+
+/* -------------------------------------------------------------------------
+   Hint text
+   ------------------------------------------------------------------------- */
+.authvault-hint {
+	margin: 0 0 var(--authvault-space-md);
+	font-size: 0.8125rem;
+	line-height: 1.5;
+	color: var(--authvault-color-text-muted);
+}
+
+/* -------------------------------------------------------------------------
+   Generate password button
+   ------------------------------------------------------------------------- */
+.authvault-generate {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	min-height: 2.25rem;
+	padding: 0 var(--authvault-space-md);
+	font-family: inherit;
+	font-size: var(--authvault-font-size-sm);
+	font-weight: 500;
+	color: var(--authvault-color-primary);
+	background: transparent;
+	border: 1px solid var(--authvault-color-primary);
+	border-radius: var(--authvault-radius-md);
+	cursor: pointer;
+	transition: background-color 0.15s ease, color 0.15s ease;
+	margin-bottom: var(--authvault-space-sm);
+	-webkit-appearance: none;
+	appearance: none;
+}
+
+.authvault-generate:hover {
+	background: var(--authvault-color-primary);
+	color: #fff;
+}
+
+.authvault-generate:focus {
+	outline: 0;
+	box-shadow: 0 0 0 3px rgb(37 99 235 / 0.15);
+}
+
+/* -------------------------------------------------------------------------
+   Invalid link notice (confirm page without key/login)
+   ------------------------------------------------------------------------- */
+.authvault-reset-confirm-invalid-link {
+	font-size: var(--authvault-font-size-sm);
+	color: var(--authvault-color-text-muted);
+	text-align: center;
+	padding: var(--authvault-space-xl);
+}
+
+.authvault-reset-confirm-invalid-link a {
+	color: var(--authvault-color-link);
+	text-decoration: none;
+}
+
+.authvault-reset-confirm-invalid-link a:hover {
 	color: var(--authvault-color-link-hover);
 }
 

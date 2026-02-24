@@ -25,6 +25,18 @@ function authvault_get_option( string $key, mixed $default = null ): mixed {
 }
 
 /**
+ * Retrieve a message option, falling back to the provided default when the stored value is empty.
+ *
+ * @param string $key     Option key (e.g. 'msg_login_error').
+ * @param string $default Default message text when the option is blank.
+ * @return string
+ */
+function authvault_get_message( string $key, string $default = '' ): string {
+	$value = authvault_get_option( $key, '' );
+	return ( is_string( $value ) && '' !== $value ) ? $value : $default;
+}
+
+/**
  * Get the full array of default setting values.
  *
  * Used by authvault_get_option(), the settings page reset, and the activator.

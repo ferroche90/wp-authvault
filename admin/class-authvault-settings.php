@@ -245,6 +245,51 @@ class AuthVault_Settings {
 		);
 
 		add_settings_field(
+			'min_password_length',
+			__( 'Minimum password length', 'authvault' ),
+			array( $this, 'render_number_field' ),
+			self::PAGE_SLUG,
+			'authvault_security',
+			array(
+				'label_for' => 'authvault_min_password_length',
+				'key'       => 'min_password_length',
+				'default'   => 8,
+				'min'       => 1,
+				'max'       => 128,
+			)
+		);
+
+		add_settings_field(
+			'reset_rate_limit_max',
+			__( 'Max password reset requests per IP', 'authvault' ),
+			array( $this, 'render_number_field' ),
+			self::PAGE_SLUG,
+			'authvault_security',
+			array(
+				'label_for' => 'authvault_reset_rate_limit_max',
+				'key'       => 'reset_rate_limit_max',
+				'default'   => 5,
+				'min'       => 1,
+				'max'       => 100,
+			)
+		);
+
+		add_settings_field(
+			'reset_rate_limit_window_minutes',
+			__( 'Password reset rate limit window (minutes)', 'authvault' ),
+			array( $this, 'render_number_field' ),
+			self::PAGE_SLUG,
+			'authvault_security',
+			array(
+				'label_for' => 'authvault_reset_rate_limit_window_minutes',
+				'key'       => 'reset_rate_limit_window_minutes',
+				'default'   => 15,
+				'min'       => 1,
+				'max'       => 1440,
+			)
+		);
+
+		add_settings_field(
 			'enable_login_log',
 			__( 'Log login attempts', 'authvault' ),
 			array( $this, 'render_checkbox' ),
@@ -335,6 +380,43 @@ class AuthVault_Settings {
 				'key'       => 'email_from_email',
 			)
 		);
+
+		// Section 6 — Messages.
+		add_settings_section(
+			'authvault_messages',
+			__( 'Messages', 'authvault' ),
+			array( $this, 'section_messages_callback' ),
+			self::PAGE_SLUG
+		);
+
+		$message_fields = array(
+			'msg_login_error'               => __( 'Login error', 'authvault' ),
+			'msg_login_lockout'             => __( 'Login lockout (%d = minutes)', 'authvault' ),
+			'msg_login_registered'          => __( 'Registration success (shown on login page)', 'authvault' ),
+			'msg_login_password_reset'      => __( 'Password reset success (shown on login page)', 'authvault' ),
+			'msg_register_error'            => __( 'Registration error', 'authvault' ),
+			'msg_reset_sent'                => __( 'Password reset email sent', 'authvault' ),
+			'msg_reset_invalid_key'         => __( 'Invalid / expired reset link', 'authvault' ),
+			'msg_confirm_invalid_link'      => __( 'Confirm page: invalid link', 'authvault' ),
+			'msg_confirm_password_empty'    => __( 'Confirm page: empty password', 'authvault' ),
+			'msg_confirm_password_mismatch' => __( 'Confirm page: passwords do not match', 'authvault' ),
+			'msg_confirm_password_weak'     => __( 'Confirm page: password too short (%d = length)', 'authvault' ),
+		);
+
+		foreach ( $message_fields as $key => $label ) {
+			add_settings_field(
+				$key,
+				$label,
+				array( $this, 'render_text_field' ),
+				self::PAGE_SLUG,
+				'authvault_messages',
+				array(
+					'label_for' => 'authvault_' . $key,
+					'key'       => $key,
+					'default'   => '',
+				)
+			);
+		}
 	}
 
 	/**
@@ -412,6 +494,12 @@ class AuthVault_Settings {
 		$output['lockout_duration_minutes'] = isset( $input['lockout_duration_minutes'] ) ? absint( $input['lockout_duration_minutes'] ) : $defaults['lockout_duration_minutes'];
 		$output['lockout_duration_minutes'] = max( 1, min( 1440, $output['lockout_duration_minutes'] ) );
 		$output['enable_lockout']          = isset( $input['enable_lockout'] );
+		$output['min_password_length']     = isset( $input['min_password_length'] ) ? absint( $input['min_password_length'] ) : $defaults['min_password_length'];
+		$output['min_password_length']     = max( 1, min( 128, $output['min_password_length'] ) );
+		$output['reset_rate_limit_max']    = isset( $input['reset_rate_limit_max'] ) ? absint( $input['reset_rate_limit_max'] ) : $defaults['reset_rate_limit_max'];
+		$output['reset_rate_limit_max']    = max( 1, min( 100, $output['reset_rate_limit_max'] ) );
+		$output['reset_rate_limit_window_minutes'] = isset( $input['reset_rate_limit_window_minutes'] ) ? absint( $input['reset_rate_limit_window_minutes'] ) : $defaults['reset_rate_limit_window_minutes'];
+		$output['reset_rate_limit_window_minutes'] = max( 1, min( 1440, $output['reset_rate_limit_window_minutes'] ) );
 		$output['enable_login_log']        = isset( $input['enable_login_log'] );
 		$output['recaptcha_enabled']        = isset( $input['recaptcha_enabled'] );
 		$output['recaptcha_site_key']      = isset( $input['recaptcha_site_key'] ) ? sanitize_text_field( $input['recaptcha_site_key'] ) : $defaults['recaptcha_site_key'];
@@ -421,6 +509,24 @@ class AuthVault_Settings {
 		$output['override_lost_password_email'] = isset( $input['override_lost_password_email'] );
 		$output['email_from_name']              = isset( $input['email_from_name'] ) ? sanitize_text_field( $input['email_from_name'] ) : $defaults['email_from_name'];
 		$output['email_from_email']             = isset( $input['email_from_email'] ) ? sanitize_email( $input['email_from_email'] ) : $defaults['email_from_email'];
+
+		// Messages.
+		$message_keys = array(
+			'msg_login_error',
+			'msg_login_lockout',
+			'msg_login_registered',
+			'msg_login_password_reset',
+			'msg_register_error',
+			'msg_reset_sent',
+			'msg_reset_invalid_key',
+			'msg_confirm_invalid_link',
+			'msg_confirm_password_empty',
+			'msg_confirm_password_mismatch',
+			'msg_confirm_password_weak',
+		);
+		foreach ( $message_keys as $mk ) {
+			$output[ $mk ] = isset( $input[ $mk ] ) ? sanitize_text_field( $input[ $mk ] ) : $defaults[ $mk ];
+		}
 
 		return $output;
 	}
@@ -499,6 +605,15 @@ class AuthVault_Settings {
 	 */
 	public function section_email_callback() {
 		echo '<p>' . esc_html__( 'Override the default "lost password" email sender.', 'authvault' ) . '</p>';
+	}
+
+	/**
+	 * Messages section description.
+	 *
+	 * @return void
+	 */
+	public function section_messages_callback() {
+		echo '<p>' . esc_html__( 'Customize user-facing messages. Leave blank to use the default text.', 'authvault' ) . '</p>';
 	}
 
 	/**

@@ -103,13 +103,17 @@ class AuthVault_Public {
 			if ( ! is_string( $reset_url ) || '' === $reset_url ) {
 				$reset_url = home_url();
 			}
-			return '<p class="authvault-reset-confirm-invalid-link">' . esc_html__( 'This link is invalid or has expired. Please request a new password reset.', 'authvault' ) . ' <a href="' . esc_url( $reset_url ) . '">' . esc_html__( 'Request password reset', 'authvault' ) . '</a></p>';
+			$msg = authvault_get_message( 'msg_confirm_invalid_link', __( 'This link is invalid or has expired. Please request a new password reset.', 'authvault' ) );
+			return '<p class="authvault-reset-confirm-invalid-link">' . esc_html( $msg ) . ' <a href="' . esc_url( $reset_url ) . '">' . esc_html__( 'Request password reset', 'authvault' ) . '</a></p>';
 		}
+
+		$confirm_errors = \AuthVault\AuthVault_Auth::get_confirm_errors();
 
 		return authvault_get_reset_confirm_form(
 			array(
 				'rp_key'   => $key,
 				'rp_login' => $login,
+				'messages' => $confirm_errors,
 			),
 			false
 		);
@@ -138,9 +142,21 @@ class AuthVault_Public {
 		wp_enqueue_script(
 			$this->plugin_name . '-public',
 			authvault_asset_url( 'assets/js/authvault-public.js' ),
-			array( 'jquery' ),
+			array(),
 			$this->version,
 			true
+		);
+		wp_localize_script(
+			$this->plugin_name . '-public',
+			'authvaultStrength',
+			array(
+				'labels' => array(
+					__( 'Very weak', 'authvault' ),
+					__( 'Weak', 'authvault' ),
+					__( 'Medium', 'authvault' ),
+					__( 'Strong', 'authvault' ),
+				),
+			)
 		);
 	}
 }

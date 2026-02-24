@@ -41,7 +41,6 @@
 }
 
 .authvault-form-wrapper .authvault-form-title {
-	padding-top: 1.5rem;
 	padding-bottom: 0.25rem;
 	margin: 0;
 }
@@ -71,7 +70,7 @@
 
 /* Form inner area */
 .authvault-form-wrapper .authvault-form {
-	padding: 0 1.5rem 1.5rem;
+	padding: 1.5rem;
 	margin: 0;
 }
 

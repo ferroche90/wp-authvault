@@ -71,14 +71,26 @@ function authvault_get_login_form( array $args = array(), $echo = true ) {
 	);
 	$lockout_mins = isset( $_GET['authvault_lockout_minutes'] ) ? absint( wp_unslash( $_GET['authvault_lockout_minutes'] ) ) : 0;
 	if ( 0 < $lockout_mins ) {
-		$args['messages'] = array_merge(
-			(array) $args['messages'],
-			array( sprintf( __( 'Too many failed attempts. Try again in %d minute(s).', 'authvault' ), $lockout_mins ) )
+		$args['messages'][] = array(
+			'type' => 'error',
+			'text' => sprintf( authvault_get_message( 'msg_login_lockout', __( 'Too many failed attempts. Try again in %d minute(s).', 'authvault' ) ), $lockout_mins ),
 		);
 	} elseif ( isset( $_GET['authvault_error'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['authvault_error'] ) ) ) {
-		$args['messages'] = array_merge(
-			(array) $args['messages'],
-			array( __( 'The credentials you entered are incorrect. Please try again.', 'authvault' ) )
+		$args['messages'][] = array(
+			'type' => 'error',
+			'text' => authvault_get_message( 'msg_login_error', __( 'The credentials you entered are incorrect. Please try again.', 'authvault' ) ),
+		);
+	}
+	if ( isset( $_GET['registered'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['registered'] ) ) ) {
+		$args['messages'][] = array(
+			'type' => 'success',
+			'text' => authvault_get_message( 'msg_login_registered', __( 'Registration complete. Please check your email for your password.', 'authvault' ) ),
+		);
+	}
+	if ( isset( $_GET['password_reset'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['password_reset'] ) ) ) {
+		$args['messages'][] = array(
+			'type' => 'success',
+			'text' => authvault_get_message( 'msg_login_password_reset', __( 'Your password has been reset. You can now log in with your new password.', 'authvault' ) ),
 		);
 	}
 	if ( true === $echo ) {
@@ -120,6 +132,12 @@ function authvault_get_register_form( array $args = array(), $echo = true ) {
 		),
 		$args
 	);
+	if ( isset( $_GET['authvault_register_error'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['authvault_register_error'] ) ) ) {
+		$args['messages'][] = array(
+			'type' => 'error',
+			'text' => authvault_get_message( 'msg_register_error', __( 'Registration failed. Please try again.', 'authvault' ) ),
+		);
+	}
 	if ( true === $echo ) {
 		ob_start();
 		authvault_load_template( 'register', $args );
@@ -165,6 +183,18 @@ function authvault_get_reset_form( array $args = array(), $echo = true ) {
 		),
 		$args
 	);
+	if ( isset( $_GET['authvault_reset_sent'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['authvault_reset_sent'] ) ) ) {
+		$args['messages'][] = array(
+			'type' => 'success',
+			'text' => authvault_get_message( 'msg_reset_sent', __( 'If an account exists for the provided details, you will receive a password reset email shortly.', 'authvault' ) ),
+		);
+	}
+	if ( isset( $_GET['error'] ) && 'invalidkey' === sanitize_text_field( wp_unslash( $_GET['error'] ) ) ) {
+		$args['messages'][] = array(
+			'type' => 'error',
+			'text' => authvault_get_message( 'msg_reset_invalid_key', __( 'This password reset link is invalid or has expired. Please request a new one.', 'authvault' ) ),
+		);
+	}
 	if ( true === $echo ) {
 		ob_start();
 		authvault_load_template( 'reset-password', $args );
@@ -186,19 +216,31 @@ function authvault_get_reset_form( array $args = array(), $echo = true ) {
  * @return string Empty string if $echo true, else form HTML.
  */
 function authvault_get_reset_confirm_form( array $args = array(), $echo = true ) {
+	$min_len = (int) authvault_get_option( 'min_password_length', 8 );
+	$min_len = max( 1, min( 128, $min_len ) );
+
 	$args = array_merge(
 		array(
-			'show_form_title'    => true,
-			'form_title_text'    => __( 'Set new password', 'authvault' ),
-			'show_labels'        => true,
-			'submit_button_text' => __( 'Reset password', 'authvault' ),
-			'rp_key'             => '',
-			'rp_login'           => '',
-			'messages'           => array(),
-			'wrapper_attributes' => array(),
+			'show_form_title'      => true,
+			'form_title_text'      => __( 'Set new password', 'authvault' ),
+			'show_form_description' => true,
+			'form_description'     => __( 'Enter a new password below or use the generated one.', 'authvault' ),
+			'show_labels'          => true,
+			'submit_button_text'   => __( 'Save password', 'authvault' ),
+			'show_strength_meter'  => true,
+			'show_generate_button' => true,
+			'show_hint_text'       => true,
+			'rp_key'               => '',
+			'rp_login'             => '',
+			'min_password_length'  => $min_len,
+			'generated_password'   => wp_generate_password( 24, true, true ),
+			'messages'             => array(),
+			'wrapper_attributes'   => array(),
 		),
 		$args
 	);
+
+	wp_enqueue_script( 'password-strength-meter' );
 	if ( true === $echo ) {
 		ob_start();
 		authvault_load_template( 'reset-password-confirm', $args );

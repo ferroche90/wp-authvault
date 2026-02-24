@@ -96,6 +96,9 @@ class AuthVault_Options {
 			'enable_lockout'                 => true,
 			'max_login_attempts'             => 5,
 			'lockout_duration_minutes'       => 15,
+			'min_password_length'            => 8,
+			'reset_rate_limit_max'           => 5,
+			'reset_rate_limit_window_minutes' => 15,
 			'recaptcha_enabled'              => false,
 			'recaptcha_site_key'             => '',
 			'recaptcha_secret_key'           => '',
@@ -107,6 +110,25 @@ class AuthVault_Options {
 
 			// Login Attempt Logging.
 			'enable_login_log'               => false,
+
+			// Messages — Login.
+			'msg_login_error'                => '',
+			'msg_login_lockout'              => '',
+			'msg_login_registered'           => '',
+			'msg_login_password_reset'       => '',
+
+			// Messages — Register.
+			'msg_register_error'             => '',
+
+			// Messages — Reset Request.
+			'msg_reset_sent'                 => '',
+			'msg_reset_invalid_key'          => '',
+
+			// Messages — Reset Confirm.
+			'msg_confirm_invalid_link'       => '',
+			'msg_confirm_password_empty'     => '',
+			'msg_confirm_password_mismatch'  => '',
+			'msg_confirm_password_weak'      => '',
 		);
 	}
 }

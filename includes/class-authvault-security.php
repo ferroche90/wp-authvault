@@ -277,6 +277,9 @@ class AuthVault_Security {
 		if ( strpos( $path, 'admin-ajax.php' ) !== false ) {
 			return $url;
 		}
+		if ( strpos( $path, 'action=rp' ) !== false || strpos( $path, 'action=resetpass' ) !== false ) {
+			return $url;
+		}
 		$parsed = wp_parse_url( $url );
 		if ( ! empty( $parsed['path'] ) && strpos( $parsed['path'], 'wp-json' ) !== false ) {
 			return $url;

@@ -41,8 +41,21 @@ $username_placeholder_text = isset( $username_placeholder ) && '' !== (string) $
 <div class="<?php echo esc_attr( $wrapper_class ); ?>" <?php echo authvault_attributes_string( $wrapper_attr, array( 'class' ) ); ?>>
 	<?php if ( ! empty( $messages ) && is_array( $messages ) ) : ?>
 		<div class="authvault-messages" role="alert">
-			<?php foreach ( $messages as $message ) : ?>
-				<p class="authvault-messages__item"><?php echo esc_html( $message ); ?></p>
+			<?php
+			foreach ( $messages as $message ) :
+				$msg_type = 'info';
+				$msg_text = '';
+				if ( is_string( $message ) ) {
+					$msg_text = $message;
+				} elseif ( is_array( $message ) ) {
+					$msg_type = isset( $message['type'] ) ? $message['type'] : 'info';
+					$msg_text = isset( $message['text'] ) ? $message['text'] : '';
+				}
+				if ( '' === $msg_text ) {
+					continue;
+				}
+			?>
+				<p class="authvault-messages__item authvault-messages__item--<?php echo esc_attr( $msg_type ); ?>"><?php echo esc_html( $msg_text ); ?></p>
 			<?php endforeach; ?>
 		</div>
 	<?php endif; ?>

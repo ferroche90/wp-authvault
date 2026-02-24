@@ -158,7 +158,6 @@
 }
 
 .authvault-settings-wrap .form-table input[type="checkbox"]:checked {
-	background: var(--wp-admin-theme-color, #2271b1);
 	border-color: var(--wp-admin-theme-color, #2271b1);
 }
 
