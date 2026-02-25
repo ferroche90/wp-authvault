@@ -47,8 +47,8 @@ class AuthVault_Settings {
 	 */
 	public function add_settings_page() {
 		add_options_page(
-			__( 'AuthVault', 'authvault' ),
-			__( 'AuthVault', 'authvault' ),
+			__( 'WP AuthVault', 'authvault' ),
+			__( 'WP AuthVault', 'authvault' ),
 			'manage_options',
 			self::PAGE_SLUG,
 			array( $this, 'render_page' )
@@ -266,7 +266,11 @@ class AuthVault_Settings {
 
 		echo '<form method="post" action="" id="authvault-reset-form" class="authvault-reset-form">';
 		wp_nonce_field( self::RESET_NONCE_ACTION, self::RESET_NONCE_ACTION );
-		echo '<button type="submit" name="authvault_reset_submit" class="button button-secondary" onclick="return confirm(\'' . esc_js( __( 'Reset all settings to defaults?', 'authvault' ) ) . '\');">';
+		$reset_confirm = __(
+			'Reset all WP AuthVault settings to their default values? This will clear your page assignments, security options (lockout, reCAPTCHA, passwords), access control, email settings, and all custom messages. This cannot be undone. Continue?',
+			'authvault'
+		);
+		echo '<button type="submit" name="authvault_reset_submit" class="button button-secondary" onclick="return confirm(\'' . esc_js( $reset_confirm ) . '\');">';
 		echo esc_html__( 'Reset to defaults', 'authvault' );
 		echo '</button>';
 		echo '</form>';
