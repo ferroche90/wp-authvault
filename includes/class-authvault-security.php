@@ -12,8 +12,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Handles lockout/attempts, reCAPTCHA verification, site_url wp-login replacement,
- * and optional login attempt logging to a custom table.
+ * Handles lockout/attempts, reCAPTCHA verification, and optional login
+ * attempt logging to a custom table.
  */
 class AuthVault_Security {
 
@@ -82,7 +82,6 @@ class AuthVault_Security {
 	 * Constructor: register filters and actions.
 	 */
 	public function __construct() {
-		add_filter( 'site_url', array( $this, 'filter_site_url_wp_login' ), 10, 4 );
 	}
 
 	/**
@@ -252,73 +251,6 @@ class AuthVault_Security {
 			true
 		);
 		self::$recaptcha_enqueued = true;
-	}
-
-	/**
-	 * Filter site_url to replace wp-login.php with custom login page URL when URL hiding is enabled.
-	 *
-	 * Excludes REST and admin-ajax.php from replacement.
-	 *
-	 * @param string $url     Full URL.
-	 * @param string $path   Path (e.g. wp-login.php).
-	 * @param string $scheme Scheme.
-	 * @param string|null $blog_id Blog ID (for multisite).
-	 * @return string
-	 */
-	public function filter_site_url_wp_login( $url, $path, $scheme, $blog_id = null ) {
-		if ( ! is_string( $path ) ) {
-			return $url;
-		}
-		if ( strpos( $path, 'wp-login.php' ) === false ) {
-			return $url;
-		}
-
-		// Password reset confirm links must always rewrite to the confirm page
-		// (regardless of whether login URL hiding is enabled), because on
-		// single-site installs the network_site_url filter never fires.
-		if ( strpos( $path, 'action=rp' ) !== false || strpos( $path, 'action=resetpass' ) !== false ) {
-			$confirm_page_id = (int) authvault_get_option( 'password_reset_confirm_page_id', 0 );
-			if ( 0 < $confirm_page_id ) {
-				$confirm_url = get_permalink( $confirm_page_id );
-				if ( is_string( $confirm_url ) && '' !== $confirm_url ) {
-					$query_string = wp_parse_url( $path, PHP_URL_QUERY );
-					if ( is_string( $query_string ) && '' !== $query_string ) {
-						$query_vars = array();
-						wp_parse_str( $query_string, $query_vars );
-						if ( ! empty( $query_vars['key'] ) && ! empty( $query_vars['login'] ) ) {
-							return add_query_arg(
-								array(
-									'key'   => $query_vars['key'],
-									'login' => $query_vars['login'],
-								),
-								$confirm_url
-							);
-						}
-					}
-				}
-			}
-			return $url;
-		}
-
-		if ( ! authvault_get_option( 'enable_login_url_hiding', false ) ) {
-			return $url;
-		}
-		if ( strpos( $path, 'admin-ajax.php' ) !== false ) {
-			return $url;
-		}
-		$parsed = wp_parse_url( $url );
-		if ( ! empty( $parsed['path'] ) && strpos( $parsed['path'], 'wp-json' ) !== false ) {
-			return $url;
-		}
-		$page_id = (int) authvault_get_option( 'login_page_id', 0 );
-		if ( 0 >= $page_id ) {
-			return $url;
-		}
-		$login_url = get_permalink( $page_id );
-		if ( ! is_string( $login_url ) || '' === $login_url ) {
-			return $url;
-		}
-		return $login_url;
 	}
 
 	/**

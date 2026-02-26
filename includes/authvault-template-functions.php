@@ -69,6 +69,14 @@ function authvault_get_login_form( array $args = array(), $echo = true ) {
 		),
 		$args
 	);
+
+	if ( empty( $args['redirect_after_success'] ) && isset( $_GET['redirect_to'] ) && is_string( $_GET['redirect_to'] ) ) {
+		$redirect_from_url = sanitize_text_field( wp_unslash( $_GET['redirect_to'] ) );
+		if ( '' !== $redirect_from_url && wp_http_validate_url( $redirect_from_url ) ) {
+			$args['redirect_after_success'] = $redirect_from_url;
+		}
+	}
+
 	$lockout_mins = isset( $_GET['authvault_lockout_minutes'] ) ? absint( wp_unslash( $_GET['authvault_lockout_minutes'] ) ) : 0;
 	if ( 0 < $lockout_mins ) {
 		$args['messages'][] = array(

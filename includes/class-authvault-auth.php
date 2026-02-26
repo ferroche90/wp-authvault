@@ -150,12 +150,14 @@ class AuthVault_Auth {
 	 */
 	public function process_login() {
 		$nonce = isset( $_POST['authvault_login_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['authvault_login_nonce'] ) ) : '';
+
 		if ( '' === $nonce || ! wp_verify_nonce( $nonce, self::LOGIN_NONCE_ACTION ) ) {
 			$this->redirect_login_with_error();
 			return;
 		}
 
 		$security = AuthVault_Security::get_instance();
+		
 		if ( ! $security->verify_recaptcha( isset( $_POST['g-recaptcha-response'] ) ? sanitize_text_field( wp_unslash( $_POST['g-recaptcha-response'] ) ) : '' ) ) {
 			$this->redirect_login_with_error();
 			return;
@@ -200,6 +202,16 @@ class AuthVault_Auth {
 			wp_safe_redirect( $redirect_to );
 			exit;
 		}
+
+		$page_id = (int) authvault_get_option( 'login_redirect_page_id', 0 );
+		if ( 0 < $page_id ) {
+			$url = get_permalink( $page_id );
+			if ( is_string( $url ) && '' !== $url ) {
+				wp_safe_redirect( $url );
+				exit;
+			}
+		}
+
 		wp_safe_redirect( home_url() );
 		exit;
 	}
@@ -256,7 +268,9 @@ class AuthVault_Auth {
 		}
 
 		$default_role = authvault_get_option( 'default_role', 'subscriber' );
-		$editable     = array_keys( get_editable_roles() );
+		$editable     = function_exists( 'get_editable_roles' )
+			? array_keys( \get_editable_roles() )
+			: array_keys( \wp_roles()->roles );
 		if ( in_array( $default_role, $editable, true ) ) {
 			$user = get_userdata( $user_id );
 			if ( $user instanceof \WP_User ) {
