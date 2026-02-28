@@ -168,6 +168,11 @@ class AuthVault_Plugin {
 	private function define_email_hooks() {
 		$this->loader->add_filter( 'wp_mail_from', $this, 'filter_mail_from_email', 10, 1 );
 		$this->loader->add_filter( 'wp_mail_from_name', $this, 'filter_mail_from_name', 10, 1 );
+
+		$email = new AuthVault_Email();
+		$this->loader->add_filter( 'retrieve_password_title', $email, 'filter_reset_email_title', 5, 3 );
+		$this->loader->add_filter( 'retrieve_password_message', $email, 'filter_reset_email_message', 5, 4 );
+
 		$this->loader->add_filter( 'retrieve_password_message', $this, 'filter_password_email_separator', 10, 4 );
 		$this->loader->add_filter( 'wp_new_user_notification_email', $this, 'filter_new_user_email_separator', 10, 3 );
 	}

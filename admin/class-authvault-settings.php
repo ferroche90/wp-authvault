@@ -542,9 +542,70 @@ class AuthVault_Settings {
 		);
 
 		echo '<table class="form-table authvault-form-table">';
-		$this->render_text_row( 'reset_email_subject', __( 'Email subject', 'authvault' ), '', __( 'Available tokens: {site_name}, {user_login}', 'authvault' ), 'authvault-email-override-dependent' );
-		$this->render_textarea_row( 'reset_email_body', __( 'Email body', 'authvault' ), __( 'Available tokens: {site_name}, {user_login}, {reset_link}. Use line breaks for formatting.', 'authvault' ), 'authvault-email-override-dependent' );
+		$this->render_reset_email_subject_row();
+		$this->render_reset_email_body_row();
 		echo '</table>';
+	}
+
+	/**
+	 * Render Email subject row with clickable token tags for password reset template.
+	 *
+	 * @return void
+	 */
+	private function render_reset_email_subject_row() {
+		$key   = 'reset_email_subject';
+		$id    = 'authvault_' . $key;
+		$value = authvault_get_option( $key, '' );
+		$tokens = array(
+			'site_name'  => '{site_name}',
+			'user_login' => '{user_login}',
+		);
+		echo '<tr class="authvault-email-override-dependent">';
+		echo '<th scope="row"><label for="' . esc_attr( $id ) . '">' . esc_html__( 'Email subject', 'authvault' ) . '</label></th>';
+		echo '<td>';
+		$this->render_email_token_buttons( $id, $tokens );
+		echo '<input type="text" id="' . esc_attr( $id ) . '" name="' . esc_attr( self::OPTION_NAME . '[' . $key . ']' ) . '" value="' . esc_attr( (string) $value ) . '" class="regular-text" />';
+		echo '<p class="description">' . esc_html__( 'Leave blank to use the WordPress default.', 'authvault' ) . '</p>';
+		echo '</td></tr>';
+	}
+
+	/**
+	 * Render Email body row with clickable token tags for password reset template.
+	 *
+	 * @return void
+	 */
+	private function render_reset_email_body_row() {
+		$key   = 'reset_email_body';
+		$id    = 'authvault_' . $key;
+		$value = authvault_get_option( $key, '' );
+		$tokens = array(
+			'site_name'   => '{site_name}',
+			'user_login'  => '{user_login}',
+			'reset_link'  => '{reset_link}',
+		);
+		echo '<tr class="authvault-email-override-dependent">';
+		echo '<th scope="row"><label for="' . esc_attr( $id ) . '">' . esc_html__( 'Email body', 'authvault' ) . '</label></th>';
+		echo '<td>';
+		$this->render_email_token_buttons( $id, $tokens );
+		echo '<textarea id="' . esc_attr( $id ) . '" name="' . esc_attr( self::OPTION_NAME . '[' . $key . ']' ) . '" rows="6" class="large-text">' . esc_textarea( (string) $value ) . '</textarea>';
+		echo '<p class="description">' . esc_html__( 'Use line breaks for formatting. Leave blank to use the WordPress default.', 'authvault' ) . '</p>';
+		echo '</td></tr>';
+	}
+
+	/**
+	 * Output clickable token tags that insert the token into the target field when clicked.
+	 *
+	 * @param string $target_input_id HTML id of the input or textarea to insert into.
+	 * @param array  $tokens          Associative array of token key => token string (e.g. 'site_name' => '{site_name}').
+	 * @return void
+	 */
+	private function render_email_token_buttons( $target_input_id, array $tokens ) {
+		echo '<p class="authvault-email-tokens">';
+		echo '<span class="authvault-email-tokens-label">' . esc_html__( 'Insert:', 'authvault' ) . '</span> ';
+		foreach ( $tokens as $token_string ) {
+			echo '<button type="button" class="authvault-token-tag" data-target="' . esc_attr( $target_input_id ) . '" data-token="' . esc_attr( $token_string ) . '">' . esc_html( $token_string ) . '</button> ';
+		}
+		echo '</p>';
 	}
 
 	/* =====================================================================

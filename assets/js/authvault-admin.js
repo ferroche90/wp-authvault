@@ -177,4 +177,25 @@
 		});
 	});
 
+	/* =================================================================
+	   Email tab: token tags — insert token at cursor when clicked
+	   ================================================================= */
+
+	document.querySelectorAll('.authvault-token-tag').forEach(function (btn) {
+		btn.addEventListener('click', function () {
+			var targetId = this.getAttribute('data-target');
+			var token   = this.getAttribute('data-token');
+			if (!targetId || token === null) return;
+			var el = document.getElementById(targetId);
+			if (!el || (el.tagName !== 'INPUT' && el.tagName !== 'TEXTAREA')) return;
+			var start = el.selectionStart != null ? el.selectionStart : el.value.length;
+			var end   = el.selectionEnd != null ? el.selectionEnd : el.value.length;
+			var before = el.value.substring(0, start);
+			var after  = el.value.substring(end);
+			el.value = before + token + after;
+			el.selectionStart = el.selectionEnd = start + token.length;
+			el.focus();
+		});
+	});
+
 })();

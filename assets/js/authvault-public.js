@@ -154,20 +154,30 @@
 		}
 
 		if (passInput.value.length > 0) {
-			if (hasMeter()) {
-				evaluate();
-			} else {
-				var attempts = 0;
-				var poll = setInterval(function () {
-					attempts++;
-					if (hasMeter()) {
-						clearInterval(poll);
+			function runInitialEvaluate() {
+				if (hasMeter()) {
+					evaluate();
+					// Re-run after a short delay so zxcvbn/meter is fully ready (fixes initial "very weak" for pre-filled password).
+					setTimeout(function () {
 						evaluate();
-					} else if (attempts >= 50) {
-						clearInterval(poll);
-					}
-				}, 200);
+					}, 350);
+				} else {
+					var attempts = 0;
+					var poll = setInterval(function () {
+						attempts++;
+						if (hasMeter()) {
+							clearInterval(poll);
+							evaluate();
+							setTimeout(function () {
+								evaluate();
+							}, 350);
+						} else if (attempts >= 50) {
+							clearInterval(poll);
+						}
+					}, 200);
+				}
 			}
+			runInitialEvaluate();
 		}
 	}
 
