@@ -344,9 +344,66 @@
 	border-radius: 4px;
 }
 
+/* =================================================================
+   Logs tab — filter form and log table
+   ================================================================= */
+
+.authvault-log-filter-form {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 16px;
+}
+
+.authvault-log-filter-form label {
+	font-weight: 600;
+	margin-left: 4px;
+}
+
+.authvault-log-filter-form input[type="date"] {
+	max-width: 170px;
+}
+
+.authvault-log-filter-form input[type="text"] {
+	max-width: 220px;
+}
+
+.authvault-log-table {
+	margin-top: 8px;
+}
+
+.authvault-log-status-success {
+	color: #00a32a;
+	font-weight: 600;
+}
+
+.authvault-log-status-fail {
+	color: #d63638;
+	font-weight: 600;
+}
+
+.authvault-log-table code {
+	font-size: 12px;
+	background: #f0f0f1;
+	padding: 2px 6px;
+	border-radius: 3px;
+}
+
+.authvault-log-table .tablenav {
+	margin-top: 12px;
+}
+
+.authvault-log-table .tablenav-pages {
+	display: flex;
+	gap: 4px;
+	flex-wrap: wrap;
+}
+
 /* =========================================================================
    Responsive
    ========================================================================= */
+
 @media screen and (max-width: 782px) {
 	.authvault-tabs-nav {
 		flex-wrap: wrap;

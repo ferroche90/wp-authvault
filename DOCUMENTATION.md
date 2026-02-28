@@ -30,7 +30,7 @@ WP AuthVault replaces WordPress’s default login, registration, and password-re
 - **Security options**: brute-force lockout (IP-based), optional Google reCAPTCHA v3, optional login-attempt logging, password strength and length rules, rate limiting on password-reset requests.
 - **URL hardening**: optional custom login slug (e.g. `/login` instead of `wp-login.php`) and hiding of `wp-login.php` (404, redirect to home, or redirect to a custom page).
 
-All settings are in **Settings → AuthVault**, in a tabbed interface (General, Security, Access Control, Email, Messages).
+All settings are in **Settings → AuthVault**, in a tabbed interface (General, Security, Access Control, Email, Messages, Logs).
 
 ### Requirements
 
@@ -54,6 +54,7 @@ All settings are in **Settings → AuthVault**, in a tabbed interface (General, 
 - Saves the current **DB version** in the option `authvault_db_version`.
 - Saves **default options** in `authvault_settings` only if no settings exist yet (it does not overwrite existing settings on re-activation).
 - **Creates four default pages** if they do not already exist: **Login**, **Register**, **Password Reset**, and **Set New Password**, each with the corresponding shortcode in the content. Their IDs are stored in `authvault_settings`. These pages are marked with post meta `_authvault_created_by_plugin` so they can be removed on uninstall.
+- **Schedules a daily cron event** (`authvault_cleanup_login_log`) to delete old login log entries based on the configured retention period.
 - **Flushes rewrite rules** so the custom login slug (e.g. `/login`) works.
 
 After activation, go to **Settings → AuthVault** to assign or change the pages and adjust security, email, and messages.
@@ -91,10 +92,11 @@ The widgets output the same forms as the shortcodes; they just allow visual cont
 ### Settings in a nutshell
 
 - **General**: Page assignments (login, register, reset, set-new-password, redirects) and registration (allow registration, default role).
-- **Security**: Brute-force lockout (enable, max attempts, duration, optional admin email), password policy (min length, allow weak passwords), rate limiting for reset requests, login logging and retention, reCAPTCHA v3 (enable, keys, minimum score).
+- **Security**: Brute-force lockout (enable, max attempts, duration, optional admin email), password policy (min length, allow weak passwords), rate limiting for reset requests, reCAPTCHA v3 (enable, keys, minimum score).
 - **Access Control**: Custom login URL slug, hide `wp-login.php` (and choose 404 / home / custom page), and where to send already-logged-in users who visit login/register (home, dashboard, or custom page).
 - **Email**: Override the “From” name and address for WordPress emails; optional custom subject and body for the password-reset email.
 - **Messages**: Customize every user-facing message (login error, lockout, registration success, reset success, etc.). Leave a field blank to use the plugin default.
+- **Logs**: Enable/disable login logging, set retention period, view login attempts with filters (status, date range, user search), paginated table with user profile links, and CSV export. Old entries are automatically deleted by a daily cron job based on the retention period.
 
 ---
 
@@ -192,15 +194,16 @@ Paths are relative to the plugin root. The following excludes `vendor/`, `node_m
 
 ### includes/class-authvault-activator.php
 
-- **activate()** (static): `check_requirements()` (PHP/WP version, wp_die if not met), `create_login_log_table()`, `save_db_version()`, `ensure_default_options()`, `create_default_pages()`, then `flush_rewrite_rules(false)`.
+- **activate()** (static): `check_requirements()` (PHP/WP version, wp_die if not met), `create_login_log_table()`, `save_db_version()`, `ensure_default_options()`, `create_default_pages()`, `schedule_log_cleanup()`, then `flush_rewrite_rules(false)`.
 - **create_login_log_table()**: Uses `dbDelta()` to create `wp_*_authvault_login_log` (id, user_login, ip_hash, status, attempted_at).
+- **schedule_log_cleanup()** (static): Schedules the `authvault_cleanup_login_log` daily cron event if not already scheduled. Also called on every page load (in `AuthVault_Plugin::define_security()`) to self-heal if the event was missed.
 - **ensure_default_options()**: If `authvault_settings` does not exist, saves `AuthVault_Options::get_defaults()`. Does not overwrite on re-activation.
 - **create_default_pages()**: For login, register, password_reset, password_reset_confirm, creates a page with the right shortcode if no such page exists (by title), then updates `authvault_settings` with the page IDs. Uses **CREATED_BY_PLUGIN_META_KEY** = `_authvault_created_by_plugin` so uninstall can delete only these pages.
 - **create_page_if_not_exists($title, $content)**: Uses `WP_Query` to see if a published page with that title exists; if not, `wp_insert_post` and sets the meta above.
 
 ### includes/class-authvault-deactivator.php
 
-- **deactivate()** (static): Only calls `flush_rewrite_rules(false)`. No data or options are removed.
+- **deactivate()** (static): Unschedules `authvault_cleanup_login_log` cron and calls `flush_rewrite_rules(false)`. No data or options are removed.
 
 ### includes/class-authvault-options.php
 
@@ -247,6 +250,7 @@ Paths are relative to the plugin root. The following excludes `vendor/`, `node_m
 - **maybe_enqueue_recaptcha_script()** (static): Enqueues the reCAPTCHA v3 script once per request when **recaptcha_enabled** and **recaptcha_site_key** are set.
 - **filter_site_url_wp_login** (site_url filter): Rewrites `wp-login.php` URLs to the AuthVault login page when URL hiding is on; always rewrites password-reset confirm links (action=rp) to the Set New Password page with key and login.
 - **log_login_attempt($user_login, $ip_hash, $status)**: Inserts into `wp_*_authvault_login_log` when **enable_login_log** is on. **LOG_TABLE_NAME** = `'authvault_login_log'`.
+- **cleanup_old_login_log_entries()** (static): Deletes rows from the login log table where `attempted_at` is older than **login_log_retention_days**. Called by the daily cron (`authvault_cleanup_login_log`) and immediately when retention is changed in settings.
 
 ### includes/class-authvault-auth.php
 
@@ -282,6 +286,8 @@ Paths are relative to the plugin root. The following excludes `vendor/`, `node_m
 - **render_page()**: Outputs tab nav (General, Security, Access Control, Email, Messages), then one form that wraps all tab panels. Each panel is rendered by `render_tab_general()`, `render_tab_security()`, etc. Save button submits to `options.php`. Separate “Reset to defaults” form with its own nonce and confirmation message.
 - **sanitize_settings($input)**: Merges input with defaults, then sanitizes and validates every key (page IDs, slugs, booleans, numbers, roles, email, message strings, etc.). Syncs **enable_user_registration** to `users_can_register`. Used by the Settings API on save.
 - **handle_reset()** (admin_init, priority 5): If POST contains the reset nonce, replaces `authvault_settings` with defaults and redirects with success/error param.
+- **handle_export_login_log()**: AJAX handler (`wp_ajax_authvault_export_login_log`). Verifies nonce and `manage_options`, applies same filters (status, user, date range), streams CSV (up to 10,000 rows).
+- **render_tab_logs()**: Login log settings (enable, retention) and, when logging is enabled, the log viewer. The viewer includes filters (status, date range, user search), export CSV button, paginated table with user profile links for successful logins.
 - Row helpers: **render_page_row**, **render_checkbox_row**, **render_number_row**, **render_text_row**, **render_email_row**, **render_password_row**, **render_score_row**, **render_select_row**, **render_role_row**, **render_textarea_row**, **render_message_row**, **render_section_heading**.
 
 ### public/class-authvault-public.php
@@ -309,7 +315,7 @@ Paths are relative to the plugin root. The following excludes `vendor/`, `node_m
 ### assets/
 
 - **authvault-admin.css**: Styles for the settings page (tabs, form tables, toggles, status dots, section headings, responsive).
-- **authvault-admin.js**: Tab switching (URL hash), conditional visibility for dependent fields (lockout, reCAPTCHA, email override, redirect pages), and updating status dots when page dropdowns change.
+- **authvault-admin.js**: Tab switching (URL hash), conditional visibility for dependent fields (lockout, reCAPTCHA, email override, redirect pages), updating status dots when page dropdowns change, and auto-switching to the Logs tab when log filter query params are present in the URL.
 - **authvault-public.css**: Styles for the front-end forms (login, register, reset, reset-confirm).
 - **authvault-public.js**: Front-end behavior (e.g. password visibility toggle, strength meter labels from `authvaultStrength`).
 - **authvault-elementor.css**: Elementor-specific form styling so widgets look correct in the editor and on the front end.
@@ -401,8 +407,6 @@ All options live in the single option **authvault_settings**. Below: key, type, 
 | allow_weak_passwords | bool | false | Auth (process_reset_confirm), template-functions |
 | reset_rate_limit_max | int | 5 | Auth (check_reset_rate_limit) |
 | reset_rate_limit_window_minutes | int | 15 | Auth (check_reset_rate_limit) |
-| enable_login_log | bool | false | Security (log_login_attempt) |
-| login_log_retention_days | int | 90 | Settings only (future: cron cleanup) |
 | recaptcha_enabled | bool | false | Security (verify_recaptcha, maybe_enqueue_recaptcha_script), template-functions (enqueue in login/register) |
 | recaptcha_site_key | string | '' | Security (maybe_enqueue_recaptcha_script) |
 | recaptcha_secret_key | string | '' | Security (verify_recaptcha) |
@@ -445,6 +449,15 @@ All options live in the single option **authvault_settings**. Below: key, type, 
 | msg_confirm_password_mismatch | string | '' | Auth, template-functions |
 | msg_confirm_password_weak | string | '' | Auth (%d = min length), template-functions |
 | msg_confirm_password_too_weak | string | '' | Auth, template-functions |
+
+### Logs tab
+
+| Option key | Type | Default | Used in |
+|------------|------|---------|--------|
+| enable_login_log | bool | false | Security (log_login_attempt), Settings (Logs tab viewer visibility) |
+| login_log_retention_days | int | 90 | Security (cleanup_old_login_log_entries), Settings (sanitize triggers cleanup on change) |
+
+The Logs tab also contains the **login log viewer** (not a stored option): a filterable, paginated table of login attempts with columns Date/Time, User Login (linked to profile for successful logins), Status, and IP Hash (last 8 chars). Filters: status (all/success/fail), user search, date range. Includes an **Export CSV** button. Old entries are automatically deleted by the `authvault_cleanup_login_log` daily cron event based on the retention period.
 
 ---
 

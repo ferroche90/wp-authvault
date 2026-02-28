@@ -14,12 +14,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Registers and renders the Settings > AuthVault page using the WordPress Settings API.
  *
- * The page is organised into five horizontal tabs:
+ * The page is organised into six horizontal tabs:
  *  1. General   — Page assignments, registration
- *  2. Security  — Brute force, password policy, rate limiting, logging, reCAPTCHA
+ *  2. Security  — Brute force, password policy, rate limiting, reCAPTCHA
  *  3. Access    — URL hiding, wp-login behaviour, logged-in redirect
  *  4. Email     — Sender override, password-reset email template
  *  5. Messages  — Customisable user-facing strings
+ *  6. Logs      — Login logging settings, log viewer, filters, CSV export
  */
 class AuthVault_Settings {
 
@@ -36,10 +37,25 @@ class AuthVault_Settings {
 	 */
 	private $tabs = array();
 
+	/**
+	 * Cron hook name for daily login log cleanup.
+	 *
+	 * @var string
+	 */
+	const LOG_CLEANUP_CRON_HOOK = 'authvault_cleanup_login_log';
+
+	/**
+	 * AJAX action for CSV export of login log.
+	 *
+	 * @var string
+	 */
+	const EXPORT_AJAX_ACTION = 'authvault_export_login_log';
+
 	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'add_settings_page' ), 10, 0 );
 		add_action( 'admin_init', array( $this, 'register_settings' ), 10, 0 );
 		add_action( 'admin_init', array( $this, 'handle_reset' ), 5, 0 );
+		add_action( 'wp_ajax_' . self::EXPORT_AJAX_ACTION, array( $this, 'handle_export_login_log' ) );
 	}
 
 	/**
@@ -151,10 +167,16 @@ class AuthVault_Settings {
 		$output['reset_rate_limit_window_minutes'] = isset( $input['reset_rate_limit_window_minutes'] ) ? absint( $input['reset_rate_limit_window_minutes'] ) : $defaults['reset_rate_limit_window_minutes'];
 		$output['reset_rate_limit_window_minutes'] = max( 1, min( 1440, $output['reset_rate_limit_window_minutes'] ) );
 
-		// Security — Login Logging.
+		// Logs — Login Logging.
 		$output['enable_login_log']         = isset( $input['enable_login_log'] );
 		$output['login_log_retention_days'] = isset( $input['login_log_retention_days'] ) ? absint( $input['login_log_retention_days'] ) : $defaults['login_log_retention_days'];
 		$output['login_log_retention_days'] = max( 1, min( 365, $output['login_log_retention_days'] ) );
+
+		$old = (array) get_option( self::OPTION_NAME, array() );
+		$old_retention = isset( $old['login_log_retention_days'] ) ? (int) $old['login_log_retention_days'] : $defaults['login_log_retention_days'];
+		if ( $output['login_log_retention_days'] !== $old_retention ) {
+			\AuthVault\AuthVault_Security::cleanup_old_login_log_entries();
+		}
 
 		// Security — reCAPTCHA.
 		$output['recaptcha_enabled']    = isset( $input['recaptcha_enabled'] );
@@ -241,6 +263,7 @@ class AuthVault_Settings {
 			'access'   => __( 'Access Control', 'authvault' ),
 			'email'    => __( 'Email', 'authvault' ),
 			'messages' => __( 'Messages', 'authvault' ),
+			'logs'     => __( 'Logs', 'authvault' ),
 		);
 
 		$this->render_admin_notices();
@@ -391,17 +414,6 @@ class AuthVault_Settings {
 		echo '<table class="form-table authvault-form-table">';
 		$this->render_number_row( 'reset_rate_limit_max', __( 'Max reset requests per IP', 'authvault' ), 5, 1, 100, __( 'Number of password-reset requests allowed within the window below.', 'authvault' ) );
 		$this->render_number_row( 'reset_rate_limit_window_minutes', __( 'Rate limit window (minutes)', 'authvault' ), 15, 1, 1440, __( 'Time window for the rate limit counter.', 'authvault' ) );
-		echo '</table>';
-
-		// --- Login Logging ---
-		$this->render_section_heading(
-			__( 'Login Logging', 'authvault' ),
-			__( 'Record login attempts in the database. No raw IP addresses are stored -- only hashes.', 'authvault' )
-		);
-
-		echo '<table class="form-table authvault-form-table">';
-		$this->render_checkbox_row( 'enable_login_log', __( 'Enable login logging', 'authvault' ), __( 'Log every login attempt (success and failure) to the database.', 'authvault' ) );
-		$this->render_number_row( 'login_log_retention_days', __( 'Retention period (days)', 'authvault' ), 90, 1, 365, __( 'Entries older than this are automatically deleted.', 'authvault' ), 'authvault-log-dependent' );
 		echo '</table>';
 
 		// --- reCAPTCHA ---
@@ -580,6 +592,334 @@ class AuthVault_Settings {
 		$this->render_message_row( 'msg_confirm_password_weak', __( 'Password too short', 'authvault' ), $default_messages['msg_confirm_password_weak'], __( '%d is replaced by the minimum length.', 'authvault' ) );
 		$this->render_message_row( 'msg_confirm_password_too_weak', __( 'Password too weak', 'authvault' ), $default_messages['msg_confirm_password_too_weak'] );
 		echo '</table>';
+	}
+
+	/* =====================================================================
+	   Tab 6 — Logs
+	   ===================================================================== */
+
+	/**
+	 * @return void
+	 */
+	private function render_tab_logs() {
+		// --- Login Log Settings ---
+		$this->render_section_heading(
+			__( 'Login Logging', 'authvault' ),
+			__( 'Record login attempts in the database. No raw IP addresses are stored — only hashes.', 'authvault' )
+		);
+
+		echo '<table class="form-table authvault-form-table">';
+		$this->render_checkbox_row( 'enable_login_log', __( 'Enable login logging', 'authvault' ), __( 'Log every login attempt (success and failure) to the database.', 'authvault' ) );
+		$this->render_number_row( 'login_log_retention_days', __( 'Retention period (days)', 'authvault' ), 90, 1, 365, __( 'Entries older than this are automatically deleted via a daily cron job.', 'authvault' ), 'authvault-log-dependent' );
+		echo '</table>';
+
+		// --- Log Viewer ---
+		$logging_enabled = (bool) authvault_get_option( 'enable_login_log', false );
+		if ( ! $logging_enabled ) {
+			echo '<div class="notice notice-info inline authvault-settings-notice"><p>';
+			echo esc_html__( 'Enable login logging above to start recording login attempts. The log viewer will appear here once logging is active.', 'authvault' );
+			echo '</p></div>';
+			return;
+		}
+
+		$this->render_section_heading(
+			__( 'Login Log', 'authvault' ),
+			__( 'Recent login attempts recorded by the plugin.', 'authvault' )
+		);
+
+		$this->render_log_filters();
+		$this->render_log_table();
+	}
+
+	/**
+	 * Render filter controls above the log table.
+	 *
+	 * @return void
+	 */
+	private function render_log_filters() {
+		$current_status = isset( $_GET['log_status'] ) ? sanitize_text_field( wp_unslash( $_GET['log_status'] ) ) : '';
+		$current_search = isset( $_GET['log_search'] ) ? sanitize_text_field( wp_unslash( $_GET['log_search'] ) ) : '';
+		$current_from   = isset( $_GET['log_from'] ) ? sanitize_text_field( wp_unslash( $_GET['log_from'] ) ) : '';
+		$current_to     = isset( $_GET['log_to'] ) ? sanitize_text_field( wp_unslash( $_GET['log_to'] ) ) : '';
+
+		$base_url = add_query_arg( array( 'page' => self::PAGE_SLUG ), admin_url( 'options-general.php' ) );
+
+		echo '<div class="authvault-log-filters">';
+		echo '<form method="get" action="' . esc_url( admin_url( 'options-general.php' ) ) . '" class="authvault-log-filter-form">';
+		echo '<input type="hidden" name="page" value="' . esc_attr( self::PAGE_SLUG ) . '" />';
+
+		echo '<label for="authvault-log-status">' . esc_html__( 'Status', 'authvault' ) . '</label>';
+		echo '<select id="authvault-log-status" name="log_status">';
+		echo '<option value="">' . esc_html__( 'All', 'authvault' ) . '</option>';
+		echo '<option value="success"' . selected( $current_status, 'success', false ) . '>' . esc_html__( 'Success', 'authvault' ) . '</option>';
+		echo '<option value="fail"' . selected( $current_status, 'fail', false ) . '>' . esc_html__( 'Fail', 'authvault' ) . '</option>';
+		echo '</select>';
+
+		echo '<label for="authvault-log-search">' . esc_html__( 'User', 'authvault' ) . '</label>';
+		echo '<input type="text" id="authvault-log-search" name="log_search" value="' . esc_attr( $current_search ) . '" placeholder="' . esc_attr__( 'Username or email', 'authvault' ) . '" class="regular-text" />';
+
+		echo '<label for="authvault-log-from">' . esc_html__( 'From', 'authvault' ) . '</label>';
+		echo '<input type="date" id="authvault-log-from" name="log_from" value="' . esc_attr( $current_from ) . '" />';
+
+		echo '<label for="authvault-log-to">' . esc_html__( 'To', 'authvault' ) . '</label>';
+		echo '<input type="date" id="authvault-log-to" name="log_to" value="' . esc_attr( $current_to ) . '" />';
+
+		echo '<button type="submit" class="button">' . esc_html__( 'Filter', 'authvault' ) . '</button>';
+
+		$has_filters = '' !== $current_status || '' !== $current_search || '' !== $current_from || '' !== $current_to;
+		if ( $has_filters ) {
+			echo ' <a href="' . esc_url( $base_url ) . '#logs" class="button">' . esc_html__( 'Clear', 'authvault' ) . '</a>';
+		}
+
+		$export_url = wp_nonce_url(
+			add_query_arg(
+				array(
+					'action'     => self::EXPORT_AJAX_ACTION,
+					'log_status' => $current_status,
+					'log_search' => $current_search,
+					'log_from'   => $current_from,
+					'log_to'     => $current_to,
+				),
+				admin_url( 'admin-ajax.php' )
+			),
+			self::EXPORT_AJAX_ACTION
+		);
+		echo ' <a href="' . esc_url( $export_url ) . '" class="button">' . esc_html__( 'Export CSV', 'authvault' ) . '</a>';
+
+		echo '</form>';
+		echo '</div>';
+	}
+
+	/**
+	 * Render the login log table with pagination.
+	 *
+	 * @return void
+	 */
+	private function render_log_table() {
+		global $wpdb;
+
+		$per_page = 20;
+		$paged    = isset( $_GET['log_paged'] ) ? max( 1, absint( $_GET['log_paged'] ) ) : 1;
+		$offset   = ( $paged - 1 ) * $per_page;
+
+		$table = \AuthVault\AuthVault_Security::get_log_table_name();
+		$where = array();
+		$args  = array();
+
+		$status_filter = isset( $_GET['log_status'] ) ? sanitize_text_field( wp_unslash( $_GET['log_status'] ) ) : '';
+		if ( 'success' === $status_filter || 'fail' === $status_filter ) {
+			$where[] = 'status = %s';
+			$args[]  = $status_filter;
+		}
+
+		$search_filter = isset( $_GET['log_search'] ) ? sanitize_text_field( wp_unslash( $_GET['log_search'] ) ) : '';
+		if ( '' !== $search_filter ) {
+			$where[] = 'user_login LIKE %s';
+			$args[]  = '%' . $wpdb->esc_like( $search_filter ) . '%';
+		}
+
+		$from_filter = isset( $_GET['log_from'] ) ? sanitize_text_field( wp_unslash( $_GET['log_from'] ) ) : '';
+		if ( '' !== $from_filter && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $from_filter ) ) {
+			$where[] = 'attempted_at >= %s';
+			$args[]  = $from_filter . ' 00:00:00';
+		}
+
+		$to_filter = isset( $_GET['log_to'] ) ? sanitize_text_field( wp_unslash( $_GET['log_to'] ) ) : '';
+		if ( '' !== $to_filter && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $to_filter ) ) {
+			$where[] = 'attempted_at <= %s';
+			$args[]  = $to_filter . ' 23:59:59';
+		}
+
+		$where_sql = '';
+		if ( ! empty( $where ) ) {
+			$where_sql = 'WHERE ' . implode( ' AND ', $where );
+		}
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is safe from get_log_table_name().
+		$count_sql = "SELECT COUNT(*) FROM {$table} {$where_sql}";
+		if ( ! empty( $args ) ) {
+			$count_sql = $wpdb->prepare( $count_sql, $args );
+		}
+		$total = (int) $wpdb->get_var( $count_sql );
+
+		$query_args   = array_merge( $args, array( $per_page, $offset ) );
+		$rows_sql     = "SELECT id, user_login, ip_hash, status, attempted_at FROM {$table} {$where_sql} ORDER BY attempted_at DESC LIMIT %d OFFSET %d";
+		$rows         = $wpdb->get_results( $wpdb->prepare( $rows_sql, $query_args ) );
+		// phpcs:enable
+
+		$total_pages = (int) ceil( $total / $per_page );
+
+		if ( empty( $rows ) ) {
+			echo '<p class="description">' . esc_html__( 'No log entries found.', 'authvault' ) . '</p>';
+			return;
+		}
+
+		echo '<p class="description">';
+		printf(
+			/* translators: 1: total entries, 2: current page, 3: total pages */
+			esc_html__( 'Showing %1$s entries (page %2$d of %3$d)', 'authvault' ),
+			'<strong>' . esc_html( number_format_i18n( $total ) ) . '</strong>',
+			$paged,
+			max( 1, $total_pages )
+		);
+		echo '</p>';
+
+		echo '<table class="widefat fixed striped authvault-log-table">';
+		echo '<thead><tr>';
+		echo '<th>' . esc_html__( 'Date / Time', 'authvault' ) . '</th>';
+		echo '<th>' . esc_html__( 'User Login', 'authvault' ) . '</th>';
+		echo '<th>' . esc_html__( 'Status', 'authvault' ) . '</th>';
+		echo '<th>' . esc_html__( 'IP Hash', 'authvault' ) . '</th>';
+		echo '</tr></thead>';
+		echo '<tbody>';
+
+		foreach ( $rows as $row ) {
+			echo '<tr>';
+
+			echo '<td>' . esc_html( $row->attempted_at ) . '</td>';
+
+			$user_obj = get_user_by( 'login', $row->user_login );
+			if ( $user_obj && 'success' === $row->status ) {
+				echo '<td><a href="' . esc_url( get_edit_user_link( $user_obj->ID ) ) . '">' . esc_html( $row->user_login ) . '</a></td>';
+			} else {
+				echo '<td>' . esc_html( $row->user_login ) . '</td>';
+			}
+
+			$status_label = 'success' === $row->status
+				? '<span class="authvault-log-status-success">' . esc_html__( 'Success', 'authvault' ) . '</span>'
+				: '<span class="authvault-log-status-fail">' . esc_html__( 'Fail', 'authvault' ) . '</span>';
+			echo '<td>' . $status_label . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped above.
+
+			$ip_short = '' !== $row->ip_hash ? substr( $row->ip_hash, -8 ) : '—';
+			echo '<td><code>' . esc_html( $ip_short ) . '</code></td>';
+
+			echo '</tr>';
+		}
+
+		echo '</tbody></table>';
+
+		if ( $total_pages > 1 ) {
+			$this->render_log_pagination( $paged, $total_pages );
+		}
+	}
+
+	/**
+	 * Render pagination links for the log table.
+	 *
+	 * @param int $current Current page.
+	 * @param int $total   Total pages.
+	 * @return void
+	 */
+	private function render_log_pagination( $current, $total ) {
+		$base_url = add_query_arg(
+			array(
+				'page'       => self::PAGE_SLUG,
+				'log_status' => isset( $_GET['log_status'] ) ? sanitize_text_field( wp_unslash( $_GET['log_status'] ) ) : '',
+				'log_search' => isset( $_GET['log_search'] ) ? sanitize_text_field( wp_unslash( $_GET['log_search'] ) ) : '',
+				'log_from'   => isset( $_GET['log_from'] ) ? sanitize_text_field( wp_unslash( $_GET['log_from'] ) ) : '',
+				'log_to'     => isset( $_GET['log_to'] ) ? sanitize_text_field( wp_unslash( $_GET['log_to'] ) ) : '',
+			),
+			admin_url( 'options-general.php' )
+		);
+
+		echo '<div class="tablenav"><div class="tablenav-pages">';
+
+		if ( $current > 1 ) {
+			echo '<a class="button" href="' . esc_url( add_query_arg( 'log_paged', $current - 1, $base_url ) . '#logs' ) . '">&laquo; ' . esc_html__( 'Previous', 'authvault' ) . '</a> ';
+		}
+
+		for ( $i = 1; $i <= $total; $i++ ) {
+			if ( $i === $current ) {
+				echo '<span class="button button-primary disabled">' . esc_html( (string) $i ) . '</span> ';
+			} elseif ( $i <= 2 || $i > $total - 2 || abs( $i - $current ) <= 2 ) {
+				echo '<a class="button" href="' . esc_url( add_query_arg( 'log_paged', $i, $base_url ) . '#logs' ) . '">' . esc_html( (string) $i ) . '</a> ';
+			} elseif ( $i === 3 && $current > 5 ) {
+				echo '<span class="button disabled">&hellip;</span> ';
+			} elseif ( $i === $total - 2 && $current < $total - 4 ) {
+				echo '<span class="button disabled">&hellip;</span> ';
+			}
+		}
+
+		if ( $current < $total ) {
+			echo '<a class="button" href="' . esc_url( add_query_arg( 'log_paged', $current + 1, $base_url ) . '#logs' ) . '">' . esc_html__( 'Next', 'authvault' ) . ' &raquo;</a>';
+		}
+
+		echo '</div></div>';
+	}
+
+	/**
+	 * Handle AJAX CSV export of login log entries.
+	 *
+	 * @return void
+	 */
+	public function handle_export_login_log() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Unauthorized', 'authvault' ), 403 );
+		}
+		check_ajax_referer( self::EXPORT_AJAX_ACTION );
+
+		global $wpdb;
+		$table = \AuthVault\AuthVault_Security::get_log_table_name();
+		$where = array();
+		$args  = array();
+
+		$status_filter = isset( $_GET['log_status'] ) ? sanitize_text_field( wp_unslash( $_GET['log_status'] ) ) : '';
+		if ( 'success' === $status_filter || 'fail' === $status_filter ) {
+			$where[] = 'status = %s';
+			$args[]  = $status_filter;
+		}
+
+		$search_filter = isset( $_GET['log_search'] ) ? sanitize_text_field( wp_unslash( $_GET['log_search'] ) ) : '';
+		if ( '' !== $search_filter ) {
+			$where[] = 'user_login LIKE %s';
+			$args[]  = '%' . $wpdb->esc_like( $search_filter ) . '%';
+		}
+
+		$from_filter = isset( $_GET['log_from'] ) ? sanitize_text_field( wp_unslash( $_GET['log_from'] ) ) : '';
+		if ( '' !== $from_filter && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $from_filter ) ) {
+			$where[] = 'attempted_at >= %s';
+			$args[]  = $from_filter . ' 00:00:00';
+		}
+
+		$to_filter = isset( $_GET['log_to'] ) ? sanitize_text_field( wp_unslash( $_GET['log_to'] ) ) : '';
+		if ( '' !== $to_filter && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $to_filter ) ) {
+			$where[] = 'attempted_at <= %s';
+			$args[]  = $to_filter . ' 23:59:59';
+		}
+
+		$where_sql = '';
+		if ( ! empty( $where ) ) {
+			$where_sql = 'WHERE ' . implode( ' AND ', $where );
+		}
+
+		$max_rows = 10000;
+		$args[]   = $max_rows;
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $wpdb->get_results( $wpdb->prepare(
+			"SELECT user_login, status, attempted_at, ip_hash FROM {$table} {$where_sql} ORDER BY attempted_at DESC LIMIT %d",
+			$args
+		) );
+		// phpcs:enable
+
+		$filename = 'authvault-login-log-' . gmdate( 'Y-m-d' ) . '.csv';
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename=' . $filename );
+		header( 'Pragma: no-cache' );
+		header( 'Expires: 0' );
+
+		$output = fopen( 'php://output', 'w' );
+		fputcsv( $output, array( 'Date/Time', 'User Login', 'Status', 'IP Hash (last 8)' ) );
+		foreach ( $rows as $row ) {
+			fputcsv( $output, array(
+				$row->attempted_at,
+				$row->user_login,
+				$row->status,
+				'' !== $row->ip_hash ? substr( $row->ip_hash, -8 ) : '',
+			) );
+		}
+		fclose( $output );
+		exit;
 	}
 
 	/* =====================================================================

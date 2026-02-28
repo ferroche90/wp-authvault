@@ -128,12 +128,25 @@ class AuthVault_Plugin {
 	}
 
 	/**
-	 * Initialize security layer (site_url filter, etc.).
+	 * Initialize security layer and register log cleanup cron handler.
 	 *
 	 * @return void
 	 */
 	private function define_security() {
 		AuthVault_Security::get_instance();
+
+		$this->loader->add_action( AuthVault_Activator::LOG_CLEANUP_CRON_HOOK, $this, 'run_login_log_cleanup', 10, 0 );
+
+		AuthVault_Activator::schedule_log_cleanup();
+	}
+
+	/**
+	 * Cron callback: delete old login log entries.
+	 *
+	 * @return void
+	 */
+	public function run_login_log_cleanup() {
+		AuthVault_Security::cleanup_old_login_log_entries();
 	}
 
 	/**

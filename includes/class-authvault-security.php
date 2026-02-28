@@ -398,4 +398,24 @@ class AuthVault_Security {
 		global $wpdb;
 		return $wpdb->prefix . self::LOG_TABLE_NAME;
 	}
+
+	/**
+	 * Delete login log entries older than the configured retention period.
+	 *
+	 * Safe to call even when logging is disabled (it still cleans up old data).
+	 *
+	 * @return int Number of rows deleted.
+	 */
+	public static function cleanup_old_login_log_entries() {
+		$days = (int) authvault_get_option( 'login_log_retention_days', 90 );
+		$days = max( 1, $days );
+
+		global $wpdb;
+		$table    = self::get_log_table_name();
+		$cutoff   = gmdate( 'Y-m-d H:i:s', time() - ( $days * DAY_IN_SECONDS ) );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is safe.
+		$deleted = $wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE attempted_at < %s", $cutoff ) );
+		return is_int( $deleted ) ? $deleted : 0;
+	}
 }

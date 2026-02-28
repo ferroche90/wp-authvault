@@ -34,13 +34,32 @@ class AuthVault_Activator {
 	 *
 	 * @return void
 	 */
+	/**
+	 * Cron hook name for daily login log cleanup.
+	 *
+	 * @var string
+	 */
+	const LOG_CLEANUP_CRON_HOOK = 'authvault_cleanup_login_log';
+
 	public static function activate() {
 		self::check_requirements();
 		self::create_login_log_table();
 		self::save_db_version();
 		self::ensure_default_options();
 		self::create_default_pages();
+		self::schedule_log_cleanup();
 		flush_rewrite_rules( false );
+	}
+
+	/**
+	 * Schedule the daily login log cleanup cron event if not already scheduled.
+	 *
+	 * @return void
+	 */
+	public static function schedule_log_cleanup() {
+		if ( ! wp_next_scheduled( self::LOG_CLEANUP_CRON_HOOK ) ) {
+			wp_schedule_event( time(), 'daily', self::LOG_CLEANUP_CRON_HOOK );
+		}
 	}
 
 	/**

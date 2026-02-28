@@ -146,6 +146,22 @@
 	})();
 
 	/* =================================================================
+	   Logs tab: auto-switch when log filter params are in the URL
+	   ================================================================= */
+
+	(function () {
+		var params = new URLSearchParams(window.location.search);
+		var logParams = ['log_status', 'log_search', 'log_from', 'log_to', 'log_paged'];
+		for (var i = 0; i < logParams.length; i++) {
+			if (params.has(logParams[i]) && params.get(logParams[i]) !== '') {
+				activateTab('logs');
+				history.replaceState(null, '', window.location.pathname + window.location.search + '#logs');
+				break;
+			}
+		}
+	})();
+
+	/* =================================================================
 	   Page assignment status dots — update on dropdown change
 	   ================================================================= */
 
