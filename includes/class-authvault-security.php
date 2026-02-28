@@ -296,17 +296,11 @@ class AuthVault_Security {
 	 * @return bool True if verification passed or reCAPTCHA disabled, false otherwise.
 	 */
 	public function verify_recaptcha( $token, $expected_action = '' ) {
-		// #region agent log
-		$__dbg_path = AUTHVAULT_PLUGIN_DIR . '.cursor/debug-5b58f8.log';
-		// #endregion
 		if ( ! authvault_get_option( 'recaptcha_enabled', false ) ) {
 			return true;
 		}
 		$secret = authvault_get_option( 'recaptcha_secret_key', '' );
 		if ( '' === $secret || ! is_string( $token ) || '' === $token ) {
-			// #region agent log
-			@file_put_contents( $__dbg_path, json_encode( array( 'sessionId' => '5b58f8', 'location' => 'class-authvault-security.php:303', 'message' => 'Early return: empty secret or token', 'data' => array( 'secretLen' => strlen( $secret ), 'tokenLen' => is_string( $token ) ? strlen( $token ) : -1 ), 'timestamp' => round( microtime( true ) * 1000 ), 'hypothesisId' => 'H-B,H-E' ) ) . "\n", FILE_APPEND );
-			// #endregion
 			return false;
 		}
 		$response = wp_remote_post(
@@ -320,40 +314,25 @@ class AuthVault_Security {
 			)
 		);
 		if ( is_wp_error( $response ) ) {
-			// #region agent log
-			@file_put_contents( $__dbg_path, json_encode( array( 'sessionId' => '5b58f8', 'location' => 'class-authvault-security.php:316', 'message' => 'wp_remote_post error', 'data' => array( 'error' => $response->get_error_message() ), 'timestamp' => round( microtime( true ) * 1000 ), 'hypothesisId' => 'H-C' ) ) . "\n", FILE_APPEND );
-			// #endregion
 			return false;
 		}
 		$code = wp_remote_retrieve_response_code( $response );
 		if ( 200 !== $code ) {
-			// #region agent log
-			@file_put_contents( $__dbg_path, json_encode( array( 'sessionId' => '5b58f8', 'location' => 'class-authvault-security.php:320', 'message' => 'Non-200 response', 'data' => array( 'code' => $code ), 'timestamp' => round( microtime( true ) * 1000 ), 'hypothesisId' => 'H-C' ) ) . "\n", FILE_APPEND );
-			// #endregion
 			return false;
 		}
 		$body = wp_remote_retrieve_body( $response );
 		$json = json_decode( $body, true );
 		if ( ! is_array( $json ) || empty( $json['success'] ) ) {
-			// #region agent log
-			@file_put_contents( $__dbg_path, json_encode( array( 'sessionId' => '5b58f8', 'location' => 'class-authvault-security.php:325', 'message' => 'Google success=false or bad json', 'data' => array( 'isArray' => is_array( $json ), 'success' => isset( $json['success'] ) ? $json['success'] : null, 'errorCodes' => isset( $json['error-codes'] ) ? $json['error-codes'] : null ), 'timestamp' => round( microtime( true ) * 1000 ), 'hypothesisId' => 'H-C' ) ) . "\n", FILE_APPEND );
-			// #endregion
 			return false;
 		}
 		if ( '' !== $expected_action ) {
 			$action = isset( $json['action'] ) ? sanitize_key( (string) $json['action'] ) : '';
 			if ( ! in_array( $expected_action, self::RECAPTCHA_ALLOWED_ACTIONS, true ) || $action !== $expected_action ) {
-				// #region agent log
-				@file_put_contents( $__dbg_path, json_encode( array( 'sessionId' => '5b58f8', 'location' => 'class-authvault-security.php:330', 'message' => 'Action mismatch', 'data' => array( 'expected' => $expected_action, 'got' => $action, 'allowed' => self::RECAPTCHA_ALLOWED_ACTIONS ), 'timestamp' => round( microtime( true ) * 1000 ), 'hypothesisId' => 'H-D' ) ) . "\n", FILE_APPEND );
-				// #endregion
 				return false;
 			}
 		}
 		$score     = isset( $json['score'] ) && is_numeric( $json['score'] ) ? (float) $json['score'] : 0.0;
 		$min_score = (float) authvault_get_option( 'recaptcha_min_score', self::RECAPTCHA_MIN_SCORE_FALLBACK );
-		// #region agent log
-		@file_put_contents( $__dbg_path, json_encode( array( 'sessionId' => '5b58f8', 'location' => 'class-authvault-security.php:336', 'message' => 'Score check', 'data' => array( 'score' => $score, 'minScore' => $min_score, 'pass' => $score >= $min_score ), 'timestamp' => round( microtime( true ) * 1000 ), 'hypothesisId' => 'H-C,H-D' ) ) . "\n", FILE_APPEND );
-		// #endregion
 		return $score >= $min_score;
 	}
 

@@ -312,29 +312,17 @@
 	 */
 	document.addEventListener('submit', function (e) {
 		var form = e.target;
-		// #region agent log
-		console.log('[AuthVault Debug] submit event fired, form:', form, 'closest .authvault-form:', form && form.closest ? form.closest('.authvault-form') : 'N/A');
-		// #endregion
 		if (!form || !form.closest || !form.closest('.authvault-form')) {
 			return;
 		}
 
 		var config = getRecaptchaConfig();
-		// #region agent log
-		console.log('[AuthVault Debug] config:', config, 'grecaptcha:', typeof window.grecaptcha, 'authvaultRecaptchaConfig:', window.authvaultRecaptchaConfig);
-		// #endregion
 		if (!config || !config.actions) {
-			// #region agent log
-			console.log('[AuthVault Debug] No reCAPTCHA config or actions - form will submit without token');
-			// #endregion
 			return;
 		}
 
 		var authAction = getFormActionName(form);
 		var recaptchaAction = config.actions[authAction];
-		// #region agent log
-		console.log('[AuthVault Debug] authAction:', authAction, 'recaptchaAction:', recaptchaAction);
-		// #endregion
 		if (!recaptchaAction) {
 			return;
 		}
@@ -344,9 +332,6 @@
 		}
 
 		e.preventDefault();
-		// #region agent log
-		console.log('[AuthVault Debug] preventDefault called, executing grecaptcha...');
-		// #endregion
 
 		if (!window.grecaptcha || typeof window.grecaptcha.execute !== 'function') {
 			showRecaptchaError(form, (config.messages && config.messages.failed) || 'Verification failed. Please try again.');
