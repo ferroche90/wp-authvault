@@ -224,7 +224,7 @@ function authvault_get_reset_form( array $args = array(), $echo = true ) {
  * @return string Empty string if $echo true, else form HTML.
  */
 function authvault_get_reset_confirm_form( array $args = array(), $echo = true ) {
-	$min_len = (int) authvault_get_option( 'min_password_length', 8 );
+	$min_len = (int) authvault_get_option( 'min_password_length', 10 );
 	$min_len = max( 1, min( 128, $min_len ) );
 	$allow_weak = (bool) authvault_get_option( 'allow_weak_passwords', false );
 

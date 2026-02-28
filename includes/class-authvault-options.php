@@ -100,7 +100,7 @@ class AuthVault_Options {
 			'lockout_duration_minutes'         => 15,
 			'lockout_admin_email_notification' => false,
 			'lockout_notification_email'       => '',
-			'min_password_length'              => 8,
+			'min_password_length'              => 10,
 			'allow_weak_passwords'             => false,
 			'reset_rate_limit_max'             => 5,
 			'reset_rate_limit_window_minutes'  => 15,

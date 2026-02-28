@@ -138,9 +138,12 @@ class AuthVault_Settings {
 		$output['lockout_notification_email']       = isset( $input['lockout_notification_email'] ) ? sanitize_email( $input['lockout_notification_email'] ) : $defaults['lockout_notification_email'];
 
 		// Security — Password Policy.
+		$output['allow_weak_passwords'] = isset( $input['allow_weak_passwords'] );
 		$output['min_password_length']  = isset( $input['min_password_length'] ) ? absint( $input['min_password_length'] ) : $defaults['min_password_length'];
 		$output['min_password_length']  = max( 1, min( 128, $output['min_password_length'] ) );
-		$output['allow_weak_passwords'] = isset( $input['allow_weak_passwords'] );
+		if ( ! $output['allow_weak_passwords'] ) {
+			$output['min_password_length'] = max( 10, $output['min_password_length'] );
+		}
 
 		// Security — Rate Limiting.
 		$output['reset_rate_limit_max']            = isset( $input['reset_rate_limit_max'] ) ? absint( $input['reset_rate_limit_max'] ) : $defaults['reset_rate_limit_max'];
@@ -358,9 +361,26 @@ class AuthVault_Settings {
 		);
 
 		echo '<table class="form-table authvault-form-table">';
-		$this->render_number_row( 'min_password_length', __( 'Minimum password length', 'authvault' ), 8, 1, 128, __( 'Passwords shorter than this are rejected.', 'authvault' ) );
-		$this->render_checkbox_row( 'allow_weak_passwords', __( 'Allow weak passwords', 'authvault' ), __( 'If unchecked, only medium or strong passwords are accepted (weak and very weak are blocked).', 'authvault' ) );
+		$allow_weak = (bool) authvault_get_option( 'allow_weak_passwords', false );
+		$min_length_min = $allow_weak ? 1 : 10;
+		$this->render_number_row(
+			'min_password_length',
+			__( 'Minimum password length', 'authvault' ),
+			10,
+			$min_length_min,
+			128,
+			__( 'Passwords shorter than this are rejected. When weak passwords are not allowed, minimum is 10.', 'authvault' )
+		);
+		$this->render_checkbox_row( 'allow_weak_passwords', __( 'Allow weak passwords', 'authvault' ), __( 'If unchecked, only medium or strong passwords are accepted and minimum length is 10.', 'authvault' ) );
 		echo '</table>';
+		$password_policy_notice_visible = ! $allow_weak;
+		echo '<div id="authvault-password-policy-weak-notice" class="notice notice-warning inline authvault-settings-notice" style="' . ( $password_policy_notice_visible ? '' : 'display:none;' ) . '">';
+		echo '<p>';
+		echo esc_html__( 'When "Allow weak passwords" is off, minimum length cannot be set below 10. To use a lower minimum (e.g. 8), enable "Allow weak passwords" above.', 'authvault' );
+		echo ' <strong>';
+		echo esc_html__( 'We recommend keeping weak passwords disabled for better site security.', 'authvault' );
+		echo '</strong></p>';
+		echo '</div>';
 
 		// --- Rate Limiting ---
 		$this->render_section_heading(

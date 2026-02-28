@@ -32,7 +32,7 @@ if ( ! empty( $wrapper_attr['class'] ) ) {
 	$wrapper_class .= ' ' . ( is_array( $wrapper_attr['class'] ) ? implode( ' ', $wrapper_attr['class'] ) : $wrapper_attr['class'] );
 }
 
-$min_len     = isset( $min_password_length ) ? (int) $min_password_length : 8;
+$min_len     = isset( $min_password_length ) ? (int) $min_password_length : 10;
 $allow_weak  = isset( $allow_weak_passwords ) ? (bool) $allow_weak_passwords : false;
 $generated   = isset( $generated_password ) ? $generated_password : '';
 ?>

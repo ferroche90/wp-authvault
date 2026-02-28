@@ -119,6 +119,32 @@
 	// Logged-in redirect page depends on behavior = "page"
 	toggleSelectDependents('authvault_logged_in_redirect_behavior', 'page', 'authvault-loggedin-page-dependent');
 
+	// When "Allow weak passwords" is unchecked, minimum length must be at least 10
+	(function () {
+		var allowWeak = document.getElementById('authvault_allow_weak_passwords');
+		var minLengthInput = document.getElementById('authvault_min_password_length');
+		var weakNotice = document.getElementById('authvault-password-policy-weak-notice');
+		if (!allowWeak || !minLengthInput) return;
+		function syncMinLengthConstraint() {
+			var allowWeakChecked = allowWeak.checked;
+			var minVal = parseInt(minLengthInput.value, 10) || 0;
+			if (allowWeakChecked) {
+				minLengthInput.min = '1';
+				minLengthInput.setAttribute('min', '1');
+				if (weakNotice) weakNotice.style.display = 'none';
+			} else {
+				minLengthInput.min = '10';
+				minLengthInput.setAttribute('min', '10');
+				if (minVal < 10) {
+					minLengthInput.value = '10';
+				}
+				if (weakNotice) weakNotice.style.display = 'block';
+			}
+		}
+		allowWeak.addEventListener('change', syncMinLengthConstraint);
+		syncMinLengthConstraint();
+	})();
+
 	/* =================================================================
 	   Page assignment status dots — update on dropdown change
 	   ================================================================= */

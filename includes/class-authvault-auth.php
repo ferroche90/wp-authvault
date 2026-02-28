@@ -188,7 +188,7 @@ class AuthVault_Auth {
 		);
 
 		if ( is_wp_error( $user ) ) {
-			$security->record_attempt( $ip_hash );
+			$security->record_attempt( $ip_hash, $username );
 			$security->log_login_attempt( $username, $ip_hash, 'fail' );
 			$this->redirect_login_with_error();
 			return;
@@ -419,7 +419,7 @@ class AuthVault_Auth {
 			return;
 		}
 
-		$min_length = (int) authvault_get_option( 'min_password_length', 8 );
+		$min_length = (int) authvault_get_option( 'min_password_length', 10 );
 		if ( strlen( $pass1 ) < $min_length ) {
 			self::$confirm_errors[] = array(
 				'type' => 'error',
