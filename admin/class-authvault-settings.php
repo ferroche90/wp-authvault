@@ -55,6 +55,7 @@ class AuthVault_Settings {
 		add_action( 'admin_menu', array( $this, 'add_settings_page' ), 10, 0 );
 		add_action( 'admin_init', array( $this, 'register_settings' ), 10, 0 );
 		add_action( 'admin_init', array( $this, 'handle_reset' ), 5, 0 );
+		add_action( 'load-settings_page_' . self::PAGE_SLUG, array( $this, 'clear_settings_errors_transient_on_save' ), 1 );
 		add_action( 'wp_ajax_' . self::EXPORT_AJAX_ACTION, array( $this, 'handle_export_login_log' ) );
 	}
 
@@ -292,7 +293,14 @@ class AuthVault_Settings {
 		}
 
 		echo '<div class="authvault-form-actions">';
-		submit_button( __( 'Save Settings', 'authvault' ), 'primary', 'submit', false );
+		// Do not use name="submit" — it shadows form.submit() and can break programmatic form submission when multiple forms exist on the page.
+		submit_button(
+			__( 'Save Settings', 'authvault' ),
+			'primary',
+			'authvault_save_settings',
+			false,
+			array( 'id' => 'authvault-save-settings' )
+		);
 		echo '</div>';
 		echo '</form>';
 
@@ -306,6 +314,14 @@ class AuthVault_Settings {
 		echo esc_html__( 'Reset to defaults', 'authvault' );
 		echo '</button>';
 		echo '</form>';
+
+		// Stub form for log filter: filter controls live inside the Logs tab and use form="authvault-log-filter-form" to avoid nested forms.
+		$logging_enabled = (bool) authvault_get_option( 'enable_login_log', false );
+		if ( $logging_enabled ) {
+			echo '<form id="authvault-log-filter-form" method="get" action="' . esc_url( admin_url( 'options-general.php' ) ) . '" class="authvault-log-filter-form" style="display:none;">';
+			echo '<input type="hidden" name="page" value="' . esc_attr( self::PAGE_SLUG ) . '" />';
+			echo '</form>';
+		}
 
 		echo '</div>';
 	}
@@ -331,7 +347,7 @@ class AuthVault_Settings {
 	   ===================================================================== */
 
 	/**
-	 * @return void
+	 * @return voidnpm
 	 */
 	private function render_tab_general() {
 		// --- Page Assignments ---
@@ -620,44 +636,50 @@ class AuthVault_Settings {
 		$this->render_number_row( 'login_log_retention_days', __( 'Retention period (days)', 'authvault' ), 90, 1, 365, __( 'Entries older than this are automatically deleted via a daily cron job.', 'authvault' ), 'authvault-log-dependent' );
 		echo '</table>';
 
-		// --- Log Viewer ---
 		$logging_enabled = (bool) authvault_get_option( 'enable_login_log', false );
 		if ( ! $logging_enabled ) {
 			echo '<div class="notice notice-info inline authvault-settings-notice"><p>';
-			echo esc_html__( 'Enable login logging above to start recording login attempts. The log viewer will appear here once logging is active.', 'authvault' );
+			echo esc_html__( 'Enable login logging above to start recording login attempts. The log viewer will appear in this tab once logging is active.', 'authvault' );
 			echo '</p></div>';
-			return;
+		} else {
+			// Log viewer (filters + table) lives in this tab; filter controls use form="authvault-log-filter-form" to submit the stub form outside the main form (no nested forms).
+			$this->render_section_heading(
+				__( 'Login Log', 'authvault' ),
+				__( 'Recent login attempts recorded by the plugin.', 'authvault' )
+			);
+			$this->render_log_filters( true );
+			$this->render_log_table();
 		}
-
-		$this->render_section_heading(
-			__( 'Login Log', 'authvault' ),
-			__( 'Recent login attempts recorded by the plugin.', 'authvault' )
-		);
-
-		$this->render_log_filters();
-		$this->render_log_table();
 	}
 
 	/**
 	 * Render filter controls above the log table.
 	 *
+	 * When $associate_with_external_form is true, controls are not wrapped in a <form>; they use
+	 * the form="authvault-log-filter-form" attribute so they submit the stub form that lives
+	 * outside the main settings form (avoids nested forms when the log viewer is inside the Logs tab).
+	 *
+	 * @param bool $associate_with_external_form If true, do not output a <form>; add form="authvault-log-filter-form" to each control.
 	 * @return void
 	 */
-	private function render_log_filters() {
+	private function render_log_filters( $associate_with_external_form = false ) {
 		$current_status = isset( $_GET['log_status'] ) ? sanitize_text_field( wp_unslash( $_GET['log_status'] ) ) : '';
 		$current_search = isset( $_GET['log_search'] ) ? sanitize_text_field( wp_unslash( $_GET['log_search'] ) ) : '';
 		$current_from   = isset( $_GET['log_from'] ) ? sanitize_text_field( wp_unslash( $_GET['log_from'] ) ) : '';
 		$current_to     = isset( $_GET['log_to'] ) ? sanitize_text_field( wp_unslash( $_GET['log_to'] ) ) : '';
 
 		$base_url = add_query_arg( array( 'page' => self::PAGE_SLUG ), admin_url( 'options-general.php' ) );
+		$form_attr = $associate_with_external_form ? ' form="authvault-log-filter-form"' : '';
 
 		echo '<div class="authvault-log-filters">';
-		echo '<form method="get" action="' . esc_url( admin_url( 'options-general.php' ) ) . '" class="authvault-log-filter-form">';
-		echo '<input type="hidden" name="page" value="' . esc_attr( self::PAGE_SLUG ) . '" />';
+		if ( ! $associate_with_external_form ) {
+			echo '<form method="get" action="' . esc_url( admin_url( 'options-general.php' ) ) . '" id="authvault-log-filter-form" class="authvault-log-filter-form">';
+			echo '<input type="hidden" name="page" value="' . esc_attr( self::PAGE_SLUG ) . '" />';
+		}
 
 		echo '<div class="authvault-log-filter-group">';
 		echo '<label for="authvault-log-status">' . esc_html__( 'Status', 'authvault' ) . '</label>';
-		echo '<select id="authvault-log-status" name="log_status">';
+		echo '<select id="authvault-log-status" name="log_status"' . $form_attr . '>';
 		echo '<option value="">' . esc_html__( 'All', 'authvault' ) . '</option>';
 		echo '<option value="success"' . selected( $current_status, 'success', false ) . '>' . esc_html__( 'Success', 'authvault' ) . '</option>';
 		echo '<option value="fail"' . selected( $current_status, 'fail', false ) . '>' . esc_html__( 'Fail', 'authvault' ) . '</option>';
@@ -666,21 +688,21 @@ class AuthVault_Settings {
 
 		echo '<div class="authvault-log-filter-group">';
 		echo '<label for="authvault-log-search">' . esc_html__( 'User', 'authvault' ) . '</label>';
-		echo '<input type="text" id="authvault-log-search" name="log_search" value="' . esc_attr( $current_search ) . '" placeholder="' . esc_attr__( 'Username or email', 'authvault' ) . '" />';
+		echo '<input type="text" id="authvault-log-search" name="log_search" value="' . esc_attr( $current_search ) . '" placeholder="' . esc_attr__( 'Username or email', 'authvault' ) . '"' . $form_attr . ' />';
 		echo '</div>';
 
 		echo '<div class="authvault-log-filter-group">';
 		echo '<label for="authvault-log-from">' . esc_html__( 'From', 'authvault' ) . '</label>';
-		echo '<input type="date" id="authvault-log-from" name="log_from" value="' . esc_attr( $current_from ) . '" />';
+		echo '<input type="date" id="authvault-log-from" name="log_from" value="' . esc_attr( $current_from ) . '"' . $form_attr . ' />';
 		echo '</div>';
 
 		echo '<div class="authvault-log-filter-group">';
 		echo '<label for="authvault-log-to">' . esc_html__( 'To', 'authvault' ) . '</label>';
-		echo '<input type="date" id="authvault-log-to" name="log_to" value="' . esc_attr( $current_to ) . '" />';
+		echo '<input type="date" id="authvault-log-to" name="log_to" value="' . esc_attr( $current_to ) . '"' . $form_attr . ' />';
 		echo '</div>';
 
 		echo '<div class="authvault-log-filter-actions">';
-		echo '<button type="submit" class="button">' . esc_html__( 'Filter', 'authvault' ) . '</button>';
+		echo '<button type="submit" class="button"' . $form_attr . '>' . esc_html__( 'Filter', 'authvault' ) . '</button>';
 
 		$has_filters = '' !== $current_status || '' !== $current_search || '' !== $current_from || '' !== $current_to;
 		if ( $has_filters ) {
@@ -703,7 +725,9 @@ class AuthVault_Settings {
 		echo '<a href="' . esc_url( $export_url ) . '" class="button">' . esc_html__( 'Export CSV', 'authvault' ) . '</a>';
 		echo '</div>';
 
-		echo '</form>';
+		if ( ! $associate_with_external_form ) {
+			echo '</form>';
+		}
 		echo '</div>';
 	}
 
@@ -949,26 +973,46 @@ class AuthVault_Settings {
 	   ===================================================================== */
 
 	/**
+	 * Clear the settings_errors transient before the admin header runs so core does not
+	 * output a duplicate "Settings saved." notice; the plugin's render_admin_notices() will show one.
+	 *
+	 * @return void
+	 */
+	public function clear_settings_errors_transient_on_save() {
+		if ( ! empty( $_GET['settings-updated'] ) ) {
+			delete_transient( 'settings_errors' );
+		}
+	}
+
+	/**
+	 * Output admin notices for this page only. Renders a single notice so we avoid duplicates
+	 * (e.g. from WordPress core or multiple settings_errors() calls). Distinguishes:
+	 * - Main form save (settings-updated) → "Settings saved." once.
+	 * - Reset form (authvault_reset) → reset success or error once.
+	 * - Log filter form (GET with log_* params) → no success notice.
+	 *
 	 * @return void
 	 */
 	private function render_admin_notices() {
-		if ( isset( $_GET['settings-updated'] ) && 'true' === sanitize_text_field( wp_unslash( $_GET['settings-updated'] ) ) ) {
-			add_settings_error(
-				self::OPTION_GROUP,
-				'settings_updated',
-				__( 'Settings saved.', 'authvault' ),
-				'success'
-			);
+		$is_log_filter_request = isset( $_GET['log_status'] ) || isset( $_GET['log_search'] ) || isset( $_GET['log_from'] ) || isset( $_GET['log_to'] ) || isset( $_GET['log_paged'] );
+
+		// Main form save: only show when options.php redirected with settings-updated (no log filter in play).
+		if ( ! $is_log_filter_request && isset( $_GET['settings-updated'] ) && 'true' === sanitize_text_field( wp_unslash( $_GET['settings-updated'] ) ) ) {
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Settings saved.', 'authvault' ) . '</p></div>';
+			return;
 		}
 
 		$reset_param = isset( $_GET['authvault_reset'] ) ? sanitize_text_field( wp_unslash( $_GET['authvault_reset'] ) ) : '';
 		if ( 'success' === $reset_param ) {
-			add_settings_error( self::OPTION_GROUP, 'reset_success', __( 'Settings reset to defaults.', 'authvault' ), 'success' );
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Settings reset to defaults.', 'authvault' ) . '</p></div>';
+			return;
 		}
 		if ( 'nonce_fail' === $reset_param ) {
-			add_settings_error( self::OPTION_GROUP, 'reset_nonce', __( 'Reset failed: security check failed. Please try again.', 'authvault' ), 'error' );
+			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'Reset failed: security check failed. Please try again.', 'authvault' ) . '</p></div>';
+			return;
 		}
 
+		// Sanitize/validation errors from the Settings API (if any).
 		settings_errors( self::OPTION_GROUP );
 	}
 
