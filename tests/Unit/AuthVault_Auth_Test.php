@@ -107,4 +107,97 @@ class AuthVault_Auth_Test extends TestCase {
 		$auth = new AuthVault_Auth();
 		$auth->process_login();
 	}
+
+	/**
+	 * Test that register redirects with generic error when reCAPTCHA is enabled and token is missing.
+	 *
+	 * @return void
+	 */
+	public function test_register_fails_with_generic_error_when_recaptcha_fails() {
+		$_POST['authvault_register_nonce'] = 'valid_nonce';
+		$_POST['username']                 = 'new_user';
+		$_POST['email']                    = 'new@example.com';
+		$_POST['g-recaptcha-response']     = '';
+
+		Functions\when( 'wp_verify_nonce' )->justReturn( true );
+		Functions\when( 'get_option' )->alias(
+			function ( $key, $default = null ) {
+				if ( 'users_can_register' === $key ) {
+					return true;
+				}
+				return $default;
+			}
+		);
+		Functions\when( 'authvault_get_option' )->alias(
+			function ( $key ) {
+				if ( 'register_page_id' === $key ) {
+					return 1;
+				}
+				if ( 'recaptcha_enabled' === $key ) {
+					return true;
+				}
+				if ( 'recaptcha_secret_key' === $key ) {
+					return 'secret';
+				}
+				return null;
+			}
+		);
+		Functions\when( 'wp_remote_post' )->justReturn( new \WP_Error( 'http_error', 'boom' ) );
+		Functions\when( 'get_permalink' )->justReturn( 'https://example.com/register/' );
+		Functions\when( 'home_url' )->justReturn( 'https://example.com/' );
+		$redirect_url = '';
+		Functions\when( 'wp_safe_redirect' )->alias(
+			function ( $url ) use ( &$redirect_url ) {
+				$redirect_url = $url;
+			}
+		);
+		Functions\when( 'exit' )->alias( function () {} );
+
+		$auth = new AuthVault_Auth();
+		$auth->process_register();
+
+		$this->assertStringContainsString( 'authvault_register_error=1', $redirect_url );
+	}
+
+	/**
+	 * Test that reset request keeps generic response when reCAPTCHA verification fails.
+	 *
+	 * @return void
+	 */
+	public function test_reset_request_still_redirects_generic_when_recaptcha_fails() {
+		$_POST['authvault_reset_nonce']  = 'valid_nonce';
+		$_POST['user_login']             = 'user@example.com';
+		$_POST['g-recaptcha-response']   = '';
+
+		Functions\when( 'wp_verify_nonce' )->justReturn( true );
+		Functions\when( 'authvault_get_option' )->alias(
+			function ( $key ) {
+				if ( 'password_reset_page_id' === $key ) {
+					return 1;
+				}
+				if ( 'recaptcha_enabled' === $key ) {
+					return true;
+				}
+				if ( 'recaptcha_secret_key' === $key ) {
+					return 'secret';
+				}
+				return null;
+			}
+		);
+		Functions\when( 'wp_remote_post' )->justReturn( new \WP_Error( 'http_error', 'boom' ) );
+		Functions\when( 'get_permalink' )->justReturn( 'https://example.com/reset/' );
+		Functions\when( 'home_url' )->justReturn( 'https://example.com/' );
+		$redirect_url = '';
+		Functions\when( 'wp_safe_redirect' )->alias(
+			function ( $url ) use ( &$redirect_url ) {
+				$redirect_url = $url;
+			}
+		);
+		Functions\when( 'exit' )->alias( function () {} );
+
+		$auth = new AuthVault_Auth();
+		$auth->process_reset_request();
+
+		$this->assertStringContainsString( 'authvault_reset_sent=1', $redirect_url );
+	}
 }

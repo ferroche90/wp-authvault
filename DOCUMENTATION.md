@@ -246,8 +246,8 @@ Paths are relative to the plugin root. The following excludes `vendor/`, `node_m
 - **get_lockout_remaining_minutes($identifier)**: Returns remaining lockout time in minutes.
 - **record_attempt($identifier)**: Increments attempt count; if it reaches **max_login_attempts**, sets lockout for **lockout_duration_minutes**.
 - **clear_attempts($identifier)**: Deletes the attempt transient (called on successful login).
-- **verify_recaptcha($token)**: If reCAPTCHA is disabled, returns true. Otherwise calls Google’s siteverify API and compares **score** to **recaptcha_min_score** (option).
-- **maybe_enqueue_recaptcha_script()** (static): Enqueues the reCAPTCHA v3 script once per request when **recaptcha_enabled** and **recaptcha_site_key** are set.
+- **verify_recaptcha($token, $expected_action = '')**: If reCAPTCHA is disabled, returns true. Otherwise calls Google’s siteverify API, optionally validates the returned `action`, and compares **score** to **recaptcha_min_score**.
+- **maybe_enqueue_recaptcha_script()** (static): Enqueues the reCAPTCHA v3 script once per request when **recaptcha_enabled** and **recaptcha_site_key** are set, and exposes frontend config (`siteKey`, action map, UI messages).
 - **filter_site_url_wp_login** (site_url filter): Rewrites `wp-login.php` URLs to the AuthVault login page when URL hiding is on; always rewrites password-reset confirm links (action=rp) to the Set New Password page with key and login.
 - **log_login_attempt($user_login, $ip_hash, $status)**: Inserts into `wp_*_authvault_login_log` when **enable_login_log** is on. **LOG_TABLE_NAME** = `'authvault_login_log'`.
 - **cleanup_old_login_log_entries()** (static): Deletes rows from the login log table where `attempted_at` is older than **login_log_retention_days**. Called by the daily cron (`authvault_cleanup_login_log`) and immediately when retention is changed in settings.
@@ -256,9 +256,9 @@ Paths are relative to the plugin root. The following excludes `vendor/`, `node_m
 
 - **Nonce actions**: LOGIN_NONCE_ACTION, REGISTER_NONCE_ACTION, RESET_NONCE_ACTION, RESET_CONFIRM_NONCE_ACTION. Each form posts its own nonce.
 - **maybe_process_forms()** (init, priority 1): If GET `action=logout` and valid log-out nonce → **process_logout()**. Else if POST, detects which form by nonce and calls **process_login**, **process_register**, **process_reset_request**, or **process_reset_confirm()**.
-- **process_login()**: Verifies nonce, reCAPTCHA, lockout; sanitizes username/password; `wp_signon`; on success clears attempts and logs success, then redirects (POST redirect_to, or **login_redirect_page_id**, or home); on failure records attempt, logs failure, redirects to login page with `authvault_error=1` and optionally `authvault_lockout_minutes`.
-- **process_register()**: Verifies nonce and **users_can_register**; `register_new_user`; sets **default_role**; redirects to login page with `registered=1`.
-- **process_reset_request()**: Verifies nonce; checks **reset_rate_limit_*** (transient per IP); calls `retrieve_password($login)`; redirects to reset page with `authvault_reset_sent=1`.
+- **process_login()**: Verifies nonce, reCAPTCHA (`login` action), lockout; sanitizes username/password; `wp_signon`; on success clears attempts and logs success, then redirects (POST redirect_to, or **login_redirect_page_id**, or home); on failure records attempt, logs failure, redirects to login page with `authvault_error=1` and optionally `authvault_lockout_minutes`.
+- **process_register()**: Verifies nonce, registration enabled, and reCAPTCHA (`register` action); then `register_new_user`; sets **default_role**; redirects to login page with `registered=1`.
+- **process_reset_request()**: Verifies nonce, reCAPTCHA (`forgot_password` action), then checks **reset_rate_limit_*** (transient per IP); calls `retrieve_password($login)`; redirects to reset page with `authvault_reset_sent=1`.
 - **process_reset_confirm()**: Verifies nonce; reads key/login from GET or POST; `check_password_reset_key`; validates password length (**min_password_length**) and strength (**allow_weak_passwords**); on success `reset_password()` and redirect to login with `password_reset=1`; on validation error stores messages in **$confirm_errors** and re-renders form.
 - **process_logout()**: Verifies log-out nonce; `wp_logout()`; redirects via **logout_redirect_page_id** or home.
 - **validate_reset_key_on_confirm_page()** (template_redirect, priority 2): On the Set New Password page, if key/login are in GET, runs `check_password_reset_key`; if invalid, redirects to reset request page with `error=invalidkey`.
@@ -407,7 +407,7 @@ All options live in the single option **authvault_settings**. Below: key, type, 
 | allow_weak_passwords | bool | false | Auth (process_reset_confirm), template-functions |
 | reset_rate_limit_max | int | 5 | Auth (check_reset_rate_limit) |
 | reset_rate_limit_window_minutes | int | 15 | Auth (check_reset_rate_limit) |
-| recaptcha_enabled | bool | false | Security (verify_recaptcha, maybe_enqueue_recaptcha_script), template-functions (enqueue in login/register) |
+| recaptcha_enabled | bool | false | Security (verify_recaptcha, maybe_enqueue_recaptcha_script), template-functions (enqueue in login/register/reset request) |
 | recaptcha_site_key | string | '' | Security (maybe_enqueue_recaptcha_script) |
 | recaptcha_secret_key | string | '' | Security (verify_recaptcha) |
 | recaptcha_min_score | float | 0.5 | Security (verify_recaptcha) |

@@ -158,7 +158,7 @@ class AuthVault_Auth {
 
 		$security = AuthVault_Security::get_instance();
 		
-		if ( ! $security->verify_recaptcha( isset( $_POST['g-recaptcha-response'] ) ? sanitize_text_field( wp_unslash( $_POST['g-recaptcha-response'] ) ) : '' ) ) {
+		if ( ! $security->verify_recaptcha( isset( $_POST['g-recaptcha-response'] ) ? sanitize_text_field( wp_unslash( $_POST['g-recaptcha-response'] ) ) : '', 'login' ) ) {
 			$this->redirect_login_with_error();
 			return;
 		}
@@ -252,6 +252,11 @@ class AuthVault_Auth {
 			$this->redirect_register_with_error();
 			return;
 		}
+		$security = AuthVault_Security::get_instance();
+		if ( ! $security->verify_recaptcha( isset( $_POST['g-recaptcha-response'] ) ? sanitize_text_field( wp_unslash( $_POST['g-recaptcha-response'] ) ) : '', 'register' ) ) {
+			$this->redirect_register_with_error();
+			return;
+		}
 
 		$username = isset( $_POST['username'] ) ? sanitize_user( wp_unslash( $_POST['username'] ) ) : '';
 		$email    = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
@@ -318,6 +323,11 @@ class AuthVault_Auth {
 
 		$login = isset( $_POST['user_login'] ) ? sanitize_text_field( wp_unslash( $_POST['user_login'] ) ) : '';
 		if ( '' === $login ) {
+			$this->redirect_reset_request_with_message();
+			return;
+		}
+		$security = AuthVault_Security::get_instance();
+		if ( ! $security->verify_recaptcha( isset( $_POST['g-recaptcha-response'] ) ? sanitize_text_field( wp_unslash( $_POST['g-recaptcha-response'] ) ) : '', 'forgot_password' ) ) {
 			$this->redirect_reset_request_with_message();
 			return;
 		}

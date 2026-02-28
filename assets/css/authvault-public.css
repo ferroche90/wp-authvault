@@ -264,6 +264,18 @@
 	color: var(--authvault-color-link-hover);
 }
 
+.authvault-recaptcha-disclosure {
+	margin: var(--authvault-space-sm) 0 0;
+	font-size: 0.75rem;
+	line-height: 1.4;
+	color: var(--authvault-color-text-muted);
+}
+
+.authvault-recaptcha-disclosure a {
+	color: inherit;
+	text-decoration: underline;
+}
+
 /* -------------------------------------------------------------------------
    Password input wrapper + toggle button
    ------------------------------------------------------------------------- */

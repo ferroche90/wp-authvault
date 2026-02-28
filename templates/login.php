@@ -80,8 +80,9 @@ $register_url = wp_registration_url();
 		<p class="authvault-form__desc authvault-form-desc"><?php echo esc_html( $form_description ); ?></p>
 	<?php endif; ?>
 
-	<form class="authvault-form__inner" method="post" action="" novalidate>
+	<form class="authvault-form__inner" method="post" action="" novalidate data-authvault-recaptcha-action="authvault_login">
 		<input type="hidden" name="authvault_action" value="authvault_login" />
+		<input type="hidden" name="g-recaptcha-response" value="" />
 		<?php wp_nonce_field( 'authvault_login', 'authvault_login_nonce' ); ?>
 		<?php if ( ! empty( $redirect_after_success ) && wp_http_validate_url( $redirect_after_success ) ) : ?>
 			<input type="hidden" name="redirect_to" value="<?php echo esc_url( $redirect_after_success ); ?>" />
@@ -152,6 +153,21 @@ $register_url = wp_registration_url();
 					<a href="<?php echo esc_url( $register_url ); ?>" class="authvault-form__link"><?php echo esc_html( $register_link_text ); ?></a>
 				<?php endif; ?>
 			</nav>
+		<?php endif; ?>
+
+		<?php if ( authvault_get_option( 'recaptcha_enabled', false ) ) : ?>
+			<p class="authvault-recaptcha-disclosure">
+				<?php
+				echo wp_kses_post(
+					sprintf(
+						/* translators: 1: Privacy Policy URL, 2: Terms URL */
+						__( 'This site is protected by reCAPTCHA and the Google <a href="%1$s" target="_blank" rel="noopener noreferrer">Privacy Policy</a> and <a href="%2$s" target="_blank" rel="noopener noreferrer">Terms of Service</a> apply.', 'authvault' ),
+						esc_url( 'https://policies.google.com/privacy' ),
+						esc_url( 'https://policies.google.com/terms' )
+					)
+				);
+				?>
+			</p>
 		<?php endif; ?>
 	</form>
 </div>

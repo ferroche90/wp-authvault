@@ -46,6 +46,13 @@ class AuthVault_Security {
 	const RECAPTCHA_MIN_SCORE_FALLBACK = 0.5;
 
 	/**
+	 * Allowed reCAPTCHA action names used by AuthVault forms.
+	 *
+	 * @var array<int, string>
+	 */
+	const RECAPTCHA_ALLOWED_ACTIONS = array( 'login', 'register', 'forgot_password' );
+
+	/**
 	 * Login log table name (without prefix).
 	 *
 	 * @var string
@@ -279,12 +286,16 @@ class AuthVault_Security {
 	}
 
 	/**
-	 * Verify reCAPTCHA v3 token with Google. Returns true if disabled or verification passes with score >= 0.5.
+	 * Verify reCAPTCHA v3 token with Google.
 	 *
-	 * @param string $token reCAPTCHA response token from frontend.
+	 * Returns true when reCAPTCHA is disabled, or when token verification succeeds,
+	 * score is above threshold, and optional action matches.
+	 *
+	 * @param string $token           reCAPTCHA response token from frontend.
+	 * @param string $expected_action Optional. Expected action name (login/register/forgot_password).
 	 * @return bool True if verification passed or reCAPTCHA disabled, false otherwise.
 	 */
-	public function verify_recaptcha( $token ) {
+	public function verify_recaptcha( $token, $expected_action = '' ) {
 		if ( ! authvault_get_option( 'recaptcha_enabled', false ) ) {
 			return true;
 		}
@@ -313,6 +324,12 @@ class AuthVault_Security {
 		$json = json_decode( $body, true );
 		if ( ! is_array( $json ) || empty( $json['success'] ) ) {
 			return false;
+		}
+		if ( '' !== $expected_action ) {
+			$action = isset( $json['action'] ) ? sanitize_key( (string) $json['action'] ) : '';
+			if ( ! in_array( $expected_action, self::RECAPTCHA_ALLOWED_ACTIONS, true ) || $action !== $expected_action ) {
+				return false;
+			}
 		}
 		$score     = isset( $json['score'] ) && is_numeric( $json['score'] ) ? (float) $json['score'] : 0.0;
 		$min_score = (float) authvault_get_option( 'recaptcha_min_score', self::RECAPTCHA_MIN_SCORE_FALLBACK );
@@ -351,6 +368,24 @@ class AuthVault_Security {
 			AUTHVAULT_VERSION,
 			true
 		);
+
+		$config = array(
+			'siteKey' => (string) $site_key,
+			'actions' => array(
+				'authvault_login'    => 'login',
+				'authvault_register' => 'register',
+				'authvault_reset'    => 'forgot_password',
+			),
+			'messages' => array(
+				'verifying' => __( 'Verifying...', 'authvault' ),
+				'failed'    => __( 'Verification failed. Please try again.', 'authvault' ),
+			),
+		);
+		$inline = 'window.authvaultRecaptchaLoaded=false;';
+		$inline .= 'window.authvaultRecaptchaOnload=function(){window.authvaultRecaptchaLoaded=true;};';
+		$inline .= 'window.authvaultRecaptchaConfig=' . wp_json_encode( $config ) . ';';
+		wp_add_inline_script( 'authvault-recaptcha', $inline, 'before' );
+
 		self::$recaptcha_enqueued = true;
 	}
 

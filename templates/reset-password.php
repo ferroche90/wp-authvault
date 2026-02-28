@@ -68,8 +68,9 @@ $username_placeholder_text = isset( $username_placeholder ) && '' !== (string) $
 		<p class="authvault-form__desc authvault-form-desc"><?php echo esc_html( $form_description ); ?></p>
 	<?php endif; ?>
 
-	<form class="authvault-form__inner" method="post" action="" novalidate>
+	<form class="authvault-form__inner" method="post" action="" novalidate data-authvault-recaptcha-action="authvault_reset">
 		<input type="hidden" name="authvault_action" value="authvault_reset" />
+		<input type="hidden" name="g-recaptcha-response" value="" />
 		<?php wp_nonce_field( 'authvault_reset', 'authvault_reset_nonce' ); ?>
 
 		<fieldset class="authvault-fieldset">
@@ -97,6 +98,21 @@ $username_placeholder_text = isset( $username_placeholder ) && '' !== (string) $
 			<nav class="authvault-form__links" aria-label="<?php echo esc_attr__( 'Reset form links', 'authvault' ); ?>">
 				<a href="<?php echo esc_url( $login_url ); ?>" class="authvault-form__link"><?php echo esc_html( $back_to_login_link_text ); ?></a>
 			</nav>
+		<?php endif; ?>
+
+		<?php if ( authvault_get_option( 'recaptcha_enabled', false ) ) : ?>
+			<p class="authvault-recaptcha-disclosure">
+				<?php
+				echo wp_kses_post(
+					sprintf(
+						/* translators: 1: Privacy Policy URL, 2: Terms URL */
+						__( 'This site is protected by reCAPTCHA and the Google <a href="%1$s" target="_blank" rel="noopener noreferrer">Privacy Policy</a> and <a href="%2$s" target="_blank" rel="noopener noreferrer">Terms of Service</a> apply.', 'authvault' ),
+						esc_url( 'https://policies.google.com/privacy' ),
+						esc_url( 'https://policies.google.com/terms' )
+					)
+				);
+				?>
+			</p>
 		<?php endif; ?>
 	</form>
 </div>

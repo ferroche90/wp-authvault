@@ -179,9 +179,15 @@ class AuthVault_Settings {
 		}
 
 		// Security — reCAPTCHA.
-		$output['recaptcha_enabled']    = isset( $input['recaptcha_enabled'] );
-		$output['recaptcha_site_key']   = isset( $input['recaptcha_site_key'] ) ? sanitize_text_field( $input['recaptcha_site_key'] ) : $defaults['recaptcha_site_key'];
-		$output['recaptcha_secret_key'] = isset( $input['recaptcha_secret_key'] ) ? sanitize_text_field( $input['recaptcha_secret_key'] ) : $defaults['recaptcha_secret_key'];
+		$output['recaptcha_enabled']  = isset( $input['recaptcha_enabled'] );
+		$recaptcha_site_key           = isset( $input['recaptcha_site_key'] ) ? sanitize_text_field( wp_unslash( $input['recaptcha_site_key'] ) ) : '';
+		$recaptcha_secret_key         = isset( $input['recaptcha_secret_key'] ) ? sanitize_text_field( wp_unslash( $input['recaptcha_secret_key'] ) ) : '';
+		$output['recaptcha_site_key'] = '' !== $recaptcha_site_key
+			? $recaptcha_site_key
+			: ( isset( $old['recaptcha_site_key'] ) ? (string) $old['recaptcha_site_key'] : $defaults['recaptcha_site_key'] );
+		$output['recaptcha_secret_key'] = '' !== $recaptcha_secret_key
+			? $recaptcha_secret_key
+			: ( isset( $old['recaptcha_secret_key'] ) ? (string) $old['recaptcha_secret_key'] : $defaults['recaptcha_secret_key'] );
 		$output['recaptcha_min_score']  = isset( $input['recaptcha_min_score'] ) ? (float) $input['recaptcha_min_score'] : $defaults['recaptcha_min_score'];
 		$output['recaptcha_min_score']  = max( 0.0, min( 1.0, $output['recaptcha_min_score'] ) );
 
@@ -419,14 +425,15 @@ class AuthVault_Settings {
 		// --- reCAPTCHA ---
 		$this->render_section_heading(
 			__( 'Google reCAPTCHA v3', 'authvault' ),
-			__( 'Protect forms with invisible reCAPTCHA. Obtain keys from the Google reCAPTCHA admin console.', 'authvault' )
+			__( 'Protect login, registration, and password reset request forms with invisible reCAPTCHA. Obtain keys from the Google reCAPTCHA admin console.', 'authvault' )
 		);
 
 		echo '<table class="form-table authvault-form-table">';
-		$this->render_checkbox_row( 'recaptcha_enabled', __( 'Enable reCAPTCHA', 'authvault' ), __( 'When enabled, login and registration forms require reCAPTCHA verification.', 'authvault' ) );
+		$this->render_checkbox_row( 'recaptcha_enabled', __( 'Enable reCAPTCHA', 'authvault' ), __( 'When enabled, login, registration, and password reset request forms require reCAPTCHA verification.', 'authvault' ) );
 		$this->render_text_row( 'recaptcha_site_key', __( 'Site Key', 'authvault' ), '', __( 'The public site key from Google reCAPTCHA.', 'authvault' ), 'authvault-recaptcha-dependent' );
-		$this->render_password_row( 'recaptcha_secret_key', __( 'Secret Key', 'authvault' ), __( 'The private secret key from Google reCAPTCHA.', 'authvault' ), 'authvault-recaptcha-dependent' );
+		$this->render_password_row( 'recaptcha_secret_key', __( 'Secret Key', 'authvault' ), __( 'The private secret key from Google reCAPTCHA. Leave empty to keep your current saved key.', 'authvault' ), 'authvault-recaptcha-dependent' );
 		$this->render_score_row( 'recaptcha_min_score', __( 'Minimum score', 'authvault' ), 0.5, __( 'Score between 0.0 and 1.0. Requests scoring below this threshold are rejected. Default: 0.5.', 'authvault' ), 'authvault-recaptcha-dependent' );
+		echo '<tr class="authvault-recaptcha-dependent"><th scope="row">' . esc_html__( 'Google notice', 'authvault' ) . '</th><td><p class="description">' . wp_kses_post( sprintf( __( 'When enabled, Google may show the reCAPTCHA badge. If your theme hides it, include a disclosure like: "This site is protected by reCAPTCHA and the Google <a href="%1$s" target="_blank" rel="noopener noreferrer">Privacy Policy</a> and <a href="%2$s" target="_blank" rel="noopener noreferrer">Terms of Service</a> apply."', 'authvault' ), esc_url( 'https://policies.google.com/privacy' ), esc_url( 'https://policies.google.com/terms' ) ) ) . '</p></td></tr>';
 		echo '</table>';
 	}
 
@@ -1130,11 +1137,15 @@ class AuthVault_Settings {
 	private function render_password_row( $key, $label, $description = '', $row_class = '' ) {
 		$id    = 'authvault_' . $key;
 		$value = authvault_get_option( $key, '' );
+		$has_saved_value = is_string( $value ) && '' !== trim( $value );
 
 		echo '<tr' . ( '' !== $row_class ? ' class="' . esc_attr( $row_class ) . '"' : '' ) . '>';
 		echo '<th scope="row"><label for="' . esc_attr( $id ) . '">' . esc_html( $label ) . '</label></th>';
 		echo '<td>';
-		echo '<input type="password" id="' . esc_attr( $id ) . '" name="' . esc_attr( self::OPTION_NAME . '[' . $key . ']' ) . '" value="' . esc_attr( (string) $value ) . '" class="regular-text" autocomplete="off" />';
+		echo '<input type="password" id="' . esc_attr( $id ) . '" name="' . esc_attr( self::OPTION_NAME . '[' . $key . ']' ) . '" value="" class="regular-text" autocomplete="off" />';
+		if ( $has_saved_value ) {
+			echo '<p class="description">' . esc_html__( 'A secret key is currently saved.', 'authvault' ) . '</p>';
+		}
 		if ( '' !== $description ) {
 			echo '<p class="description">' . esc_html( $description ) . '</p>';
 		}

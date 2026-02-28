@@ -221,6 +221,132 @@
 	}
 
 	/* -----------------------------------------------------------------
+	   reCAPTCHA v3 submit flow (login/register/reset request)
+	   ----------------------------------------------------------------- */
+
+	function getRecaptchaConfig() {
+		if (!window.authvaultRecaptchaConfig || !window.authvaultRecaptchaConfig.siteKey) {
+			return null;
+		}
+		return window.authvaultRecaptchaConfig;
+	}
+
+	function getFormActionName(form) {
+		if (form.dataset && form.dataset.authvaultRecaptchaAction) {
+			return form.dataset.authvaultRecaptchaAction;
+		}
+		var actionInput = form.querySelector('input[name="authvault_action"]');
+		return actionInput ? actionInput.value : '';
+	}
+
+	function setSubmitBusy(form, isBusy, text) {
+		var submit = form.querySelector('button[type="submit"], input[type="submit"]');
+		if (!submit) {
+			return null;
+		}
+		var isButton = submit.tagName && submit.tagName.toLowerCase() === 'button';
+		if (!submit.dataset.authvaultOriginalText) {
+			submit.dataset.authvaultOriginalText = isButton ? (submit.textContent || '') : (submit.value || '');
+		}
+		if (isBusy) {
+			submit.setAttribute('aria-busy', 'true');
+			submit.disabled = true;
+			if (text) {
+				if (isButton) {
+					submit.textContent = text;
+				} else {
+					submit.value = text;
+				}
+			}
+		} else {
+			submit.removeAttribute('aria-busy');
+			submit.disabled = false;
+			if (submit.dataset.authvaultOriginalText && isButton) {
+				submit.textContent = submit.dataset.authvaultOriginalText;
+			} else if (submit.dataset.authvaultOriginalText) {
+				submit.value = submit.dataset.authvaultOriginalText;
+			}
+		}
+		return submit;
+	}
+
+	function ensureFormMessageContainer(form) {
+		var existing = form.parentNode ? form.parentNode.querySelector('.authvault-messages') : null;
+		if (existing) {
+			return existing;
+		}
+		var wrap = document.createElement('div');
+		wrap.className = 'authvault-messages';
+		if (form.parentNode) {
+			form.parentNode.insertBefore(wrap, form);
+		}
+		return wrap;
+	}
+
+	function showRecaptchaError(form, message) {
+		var container = ensureFormMessageContainer(form);
+		if (!container) {
+			return;
+		}
+		var item = document.createElement('p');
+		item.className = 'authvault-messages__item authvault-messages__item--error';
+		item.textContent = message;
+		container.innerHTML = '';
+		container.appendChild(item);
+	}
+
+	function setRecaptchaToken(form, token) {
+		var tokenInput = form.querySelector('input[name="g-recaptcha-response"]');
+		if (!tokenInput) {
+			tokenInput = document.createElement('input');
+			tokenInput.type = 'hidden';
+			tokenInput.name = 'g-recaptcha-response';
+			form.appendChild(tokenInput);
+		}
+		tokenInput.value = token;
+	}
+
+	function initRecaptchaForms() {
+		var config = getRecaptchaConfig();
+		if (!config || !config.actions) {
+			return;
+		}
+		var forms = document.querySelectorAll('.authvault-form form');
+		forms.forEach(function (form) {
+			var authAction = getFormActionName(form);
+			var recaptchaAction = config.actions[authAction];
+			if (!recaptchaAction || form.dataset.authvaultRecaptchaBound === '1') {
+				return;
+			}
+			form.dataset.authvaultRecaptchaBound = '1';
+			form.addEventListener('submit', function (e) {
+				if (form.dataset.authvaultRecaptchaSubmitting === '1') {
+					return;
+				}
+				e.preventDefault();
+				if (!window.grecaptcha || typeof window.grecaptcha.execute !== 'function') {
+					showRecaptchaError(form, (config.messages && config.messages.failed) || 'Verification failed. Please try again.');
+					return;
+				}
+				form.dataset.authvaultRecaptchaSubmitting = '1';
+				setSubmitBusy(form, true, (config.messages && config.messages.verifying) || 'Verifying...');
+
+				window.grecaptcha.execute(config.siteKey, { action: recaptchaAction }).then(function (token) {
+					if (!token) {
+						throw new Error('empty_token');
+					}
+					setRecaptchaToken(form, token);
+					form.submit();
+				}).catch(function () {
+					form.dataset.authvaultRecaptchaSubmitting = '0';
+					setSubmitBusy(form, false);
+					showRecaptchaError(form, (config.messages && config.messages.failed) || 'Verification failed. Please try again.');
+				});
+			});
+		});
+	}
+
+	/* -----------------------------------------------------------------
 	   Initialize on DOMContentLoaded
 	   ----------------------------------------------------------------- */
 
@@ -228,9 +354,11 @@
 		document.addEventListener('DOMContentLoaded', function () {
 			initStrengthMeter();
 			initGenerateButton();
+			initRecaptchaForms();
 		});
 	} else {
 		initStrengthMeter();
 		initGenerateButton();
+		initRecaptchaForms();
 	}
 })();
