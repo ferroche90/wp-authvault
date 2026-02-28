@@ -159,7 +159,7 @@ class AuthVault_Auth {
 		$security = AuthVault_Security::get_instance();
 		
 		if ( ! $security->verify_recaptcha( isset( $_POST['g-recaptcha-response'] ) ? sanitize_text_field( wp_unslash( $_POST['g-recaptcha-response'] ) ) : '', 'login' ) ) {
-			$this->redirect_login_with_error();
+			$this->redirect_login_with_recaptcha_error();
 			return;
 		}
 
@@ -237,6 +237,22 @@ class AuthVault_Auth {
 	}
 
 	/**
+	 * Redirect to login page with reCAPTCHA verification error.
+	 *
+	 * @return void
+	 */
+	private function redirect_login_with_recaptcha_error() {
+		$login_page_id = (int) authvault_get_option( 'login_page_id', 0 );
+		$url           = ( 0 < $login_page_id ) ? get_permalink( $login_page_id ) : home_url();
+		if ( ! is_string( $url ) || '' === $url ) {
+			$url = home_url();
+		}
+		$url = add_query_arg( 'authvault_recaptcha_error', '1', $url );
+		wp_safe_redirect( $url );
+		exit;
+	}
+
+	/**
 	 * Process registration form: verify nonce, sanitize, register_new_user, redirect.
 	 *
 	 * @return void
@@ -254,7 +270,7 @@ class AuthVault_Auth {
 		}
 		$security = AuthVault_Security::get_instance();
 		if ( ! $security->verify_recaptcha( isset( $_POST['g-recaptcha-response'] ) ? sanitize_text_field( wp_unslash( $_POST['g-recaptcha-response'] ) ) : '', 'register' ) ) {
-			$this->redirect_register_with_error();
+			$this->redirect_register_with_recaptcha_error();
 			return;
 		}
 
@@ -310,6 +326,22 @@ class AuthVault_Auth {
 	}
 
 	/**
+	 * Redirect to register page with reCAPTCHA verification error.
+	 *
+	 * @return void
+	 */
+	private function redirect_register_with_recaptcha_error() {
+		$register_page_id = (int) authvault_get_option( 'register_page_id', 0 );
+		$url              = ( 0 < $register_page_id ) ? get_permalink( $register_page_id ) : home_url();
+		if ( ! is_string( $url ) || '' === $url ) {
+			$url = home_url();
+		}
+		$url = add_query_arg( 'authvault_recaptcha_error', '1', $url );
+		wp_safe_redirect( $url );
+		exit;
+	}
+
+	/**
 	 * Process password reset request: verify nonce, sanitize, retrieve_password(), generic success.
 	 *
 	 * @return void
@@ -328,7 +360,7 @@ class AuthVault_Auth {
 		}
 		$security = AuthVault_Security::get_instance();
 		if ( ! $security->verify_recaptcha( isset( $_POST['g-recaptcha-response'] ) ? sanitize_text_field( wp_unslash( $_POST['g-recaptcha-response'] ) ) : '', 'forgot_password' ) ) {
-			$this->redirect_reset_request_with_message();
+			$this->redirect_reset_with_recaptcha_error();
 			return;
 		}
 
@@ -378,6 +410,22 @@ class AuthVault_Auth {
 			$url = home_url();
 		}
 		$url = add_query_arg( 'authvault_reset_sent', '1', $url );
+		wp_safe_redirect( $url );
+		exit;
+	}
+
+	/**
+	 * Redirect to password reset page with reCAPTCHA verification error.
+	 *
+	 * @return void
+	 */
+	private function redirect_reset_with_recaptcha_error() {
+		$reset_page_id = (int) authvault_get_option( 'password_reset_page_id', 0 );
+		$url           = ( 0 < $reset_page_id ) ? get_permalink( $reset_page_id ) : home_url();
+		if ( ! is_string( $url ) || '' === $url ) {
+			$url = home_url();
+		}
+		$url = add_query_arg( 'authvault_recaptcha_error', '1', $url );
 		wp_safe_redirect( $url );
 		exit;
 	}

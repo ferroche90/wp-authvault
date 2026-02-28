@@ -306,45 +306,78 @@
 		tokenInput.value = token;
 	}
 
-	function initRecaptchaForms() {
-		var config = getRecaptchaConfig();
-		if (!config || !config.actions) {
+	/**
+	 * Delegated submit handler: works regardless of script load order because
+	 * config is read at submit time, not at DOMContentLoaded.
+	 */
+	document.addEventListener('submit', function (e) {
+		var form = e.target;
+		// #region agent log
+		console.log('[AuthVault Debug] submit event fired, form:', form, 'closest .authvault-form:', form && form.closest ? form.closest('.authvault-form') : 'N/A');
+		// #endregion
+		if (!form || !form.closest || !form.closest('.authvault-form')) {
 			return;
 		}
-		var forms = document.querySelectorAll('.authvault-form form');
-		forms.forEach(function (form) {
-			var authAction = getFormActionName(form);
-			var recaptchaAction = config.actions[authAction];
-			if (!recaptchaAction || form.dataset.authvaultRecaptchaBound === '1') {
-				return;
-			}
-			form.dataset.authvaultRecaptchaBound = '1';
-			form.addEventListener('submit', function (e) {
-				if (form.dataset.authvaultRecaptchaSubmitting === '1') {
-					return;
-				}
-				e.preventDefault();
-				if (!window.grecaptcha || typeof window.grecaptcha.execute !== 'function') {
-					showRecaptchaError(form, (config.messages && config.messages.failed) || 'Verification failed. Please try again.');
-					return;
-				}
-				form.dataset.authvaultRecaptchaSubmitting = '1';
-				setSubmitBusy(form, true, (config.messages && config.messages.verifying) || 'Verifying...');
 
-				window.grecaptcha.execute(config.siteKey, { action: recaptchaAction }).then(function (token) {
-					if (!token) {
-						throw new Error('empty_token');
-					}
-					setRecaptchaToken(form, token);
-					form.submit();
-				}).catch(function () {
-					form.dataset.authvaultRecaptchaSubmitting = '0';
-					setSubmitBusy(form, false);
-					showRecaptchaError(form, (config.messages && config.messages.failed) || 'Verification failed. Please try again.');
-				});
+		var config = getRecaptchaConfig();
+		// #region agent log
+		console.log('[AuthVault Debug] config:', config, 'grecaptcha:', typeof window.grecaptcha, 'authvaultRecaptchaConfig:', window.authvaultRecaptchaConfig);
+		// #endregion
+		if (!config || !config.actions) {
+			// #region agent log
+			console.log('[AuthVault Debug] No reCAPTCHA config or actions - form will submit without token');
+			// #endregion
+			return;
+		}
+
+		var authAction = getFormActionName(form);
+		var recaptchaAction = config.actions[authAction];
+		// #region agent log
+		console.log('[AuthVault Debug] authAction:', authAction, 'recaptchaAction:', recaptchaAction);
+		// #endregion
+		if (!recaptchaAction) {
+			return;
+		}
+
+		if (form.dataset.authvaultRecaptchaSubmitting === '1') {
+			return;
+		}
+
+		e.preventDefault();
+		// #region agent log
+		console.log('[AuthVault Debug] preventDefault called, executing grecaptcha...');
+		// #endregion
+
+		if (!window.grecaptcha || typeof window.grecaptcha.execute !== 'function') {
+			showRecaptchaError(form, (config.messages && config.messages.failed) || 'Verification failed. Please try again.');
+			return;
+		}
+
+		form.dataset.authvaultRecaptchaSubmitting = '1';
+		setSubmitBusy(form, true, (config.messages && config.messages.verifying) || 'Verifying...');
+
+		// Support both siteKey (PHP) and sitekey (some envs lowercase)
+		var siteKey = config.siteKey || config.sitekey;
+		function doExecute() {
+			window.grecaptcha.execute(siteKey, { action: recaptchaAction }).then(function (token) {
+				if (!token) {
+					throw new Error('empty_token');
+				}
+				setRecaptchaToken(form, token);
+				form.submit();
+			}).catch(function (err) {
+				form.dataset.authvaultRecaptchaSubmitting = '0';
+				setSubmitBusy(form, false);
+				showRecaptchaError(form, (config.messages && config.messages.failed) || 'Verification failed. Please try again.');
 			});
-		});
-	}
+		}
+		// reCAPTCHA v3: execute only after the API is ready (Google recommendation)
+		if (typeof window.grecaptcha.ready === 'function') {
+			window.grecaptcha.ready(doExecute);
+		} else {
+			doExecute();
+		}
+	});
 
 	/* -----------------------------------------------------------------
 	   Initialize on DOMContentLoaded
@@ -354,11 +387,9 @@
 		document.addEventListener('DOMContentLoaded', function () {
 			initStrengthMeter();
 			initGenerateButton();
-			initRecaptchaForms();
 		});
 	} else {
 		initStrengthMeter();
 		initGenerateButton();
-		initRecaptchaForms();
 	}
 })();

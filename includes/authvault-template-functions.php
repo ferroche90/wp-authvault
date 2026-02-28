@@ -77,6 +77,13 @@ function authvault_get_login_form( array $args = array(), $echo = true ) {
 		}
 	}
 
+	if ( isset( $_GET['authvault_recaptcha_error'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['authvault_recaptcha_error'] ) ) ) {
+		$args['messages'][] = array(
+			'type' => 'error',
+			'text' => authvault_get_message( 'msg_recaptcha_error', __( 'Verification failed. Please try again.', 'authvault' ) ),
+		);
+	}
+
 	$lockout_mins = isset( $_GET['authvault_lockout_minutes'] ) ? absint( wp_unslash( $_GET['authvault_lockout_minutes'] ) ) : 0;
 	if ( 0 < $lockout_mins ) {
 		$args['messages'][] = array(
@@ -140,7 +147,12 @@ function authvault_get_register_form( array $args = array(), $echo = true ) {
 		),
 		$args
 	);
-	if ( isset( $_GET['authvault_register_error'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['authvault_register_error'] ) ) ) {
+	if ( isset( $_GET['authvault_recaptcha_error'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['authvault_recaptcha_error'] ) ) ) {
+		$args['messages'][] = array(
+			'type' => 'error',
+			'text' => authvault_get_message( 'msg_recaptcha_error', __( 'Verification failed. Please try again.', 'authvault' ) ),
+		);
+	} elseif ( isset( $_GET['authvault_register_error'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['authvault_register_error'] ) ) ) {
 		$args['messages'][] = array(
 			'type' => 'error',
 			'text' => authvault_get_message( 'msg_register_error', __( 'Registration failed. Please try again.', 'authvault' ) ),
@@ -191,6 +203,12 @@ function authvault_get_reset_form( array $args = array(), $echo = true ) {
 		),
 		$args
 	);
+	if ( isset( $_GET['authvault_recaptcha_error'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['authvault_recaptcha_error'] ) ) ) {
+		$args['messages'][] = array(
+			'type' => 'error',
+			'text' => authvault_get_message( 'msg_recaptcha_error', __( 'Verification failed. Please try again.', 'authvault' ) ),
+		);
+	}
 	if ( isset( $_GET['authvault_reset_sent'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['authvault_reset_sent'] ) ) ) {
 		$args['messages'][] = array(
 			'type' => 'success',

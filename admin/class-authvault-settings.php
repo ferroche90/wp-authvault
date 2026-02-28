@@ -1182,11 +1182,12 @@ class AuthVault_Settings {
 		$id    = 'authvault_' . $key;
 		$value = authvault_get_option( $key, '' );
 		$has_saved_value = is_string( $value ) && '' !== trim( $value );
+		$placeholder_attr = $has_saved_value ? ' placeholder="' . esc_attr( str_repeat( "\u{2022}", 20 ) ) . '"' : '';
 
 		echo '<tr' . ( '' !== $row_class ? ' class="' . esc_attr( $row_class ) . '"' : '' ) . '>';
 		echo '<th scope="row"><label for="' . esc_attr( $id ) . '">' . esc_html( $label ) . '</label></th>';
 		echo '<td>';
-		echo '<input type="password" id="' . esc_attr( $id ) . '" name="' . esc_attr( self::OPTION_NAME . '[' . $key . ']' ) . '" value="" class="regular-text" autocomplete="off" />';
+		echo '<input type="password" id="' . esc_attr( $id ) . '" name="' . esc_attr( self::OPTION_NAME . '[' . $key . ']' ) . '" value="" class="regular-text" autocomplete="off"' . $placeholder_attr . ' />';
 		if ( $has_saved_value ) {
 			echo '<p class="description">' . esc_html__( 'A secret key is currently saved.', 'authvault' ) . '</p>';
 		}
