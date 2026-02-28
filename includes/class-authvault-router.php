@@ -12,8 +12,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Handles login URL hiding, rewrite rules for the custom login slug,
- * filters for login/logout/register/lostpassword URLs, and redirects.
+ * Handles auth URL rewriting: custom login slug, rewrite rules, and both
+ * site_url and network_site_url for wp-login (reset confirm link and login
+ * page replacement when URL hiding is on). Also login/logout/register/lostpassword
+ * URL filters and redirects.
  */
 class AuthVault_Router {
 
@@ -327,10 +329,106 @@ class AuthVault_Router {
 	}
 
 	/**
-	 * Filter network_site_url for wp-login.php to point to AuthVault login page.
+	 * Build Set New Password page URL from a path containing action=rp/resetpass and key/login.
+	 *
+	 * Used by both site_url and network_site_url filters so reset-link rewriting lives in one place.
+	 *
+	 * @param string $path Path (e.g. wp-login.php?action=rp&key=...&login=...).
+	 * @return string|null Confirm page URL with key and login, or null if not a valid reset-confirm path.
+	 */
+	private function rewrite_reset_confirm_url_from_path( $path ) {
+		if ( ! is_string( $path ) || ( strpos( $path, 'action=rp' ) === false && strpos( $path, 'action=resetpass' ) === false ) ) {
+			return null;
+		}
+		$confirm_page_id = (int) authvault_get_option( 'password_reset_confirm_page_id', 0 );
+		if ( 0 >= $confirm_page_id ) {
+			return null;
+		}
+		$confirm_url = get_permalink( $confirm_page_id );
+		if ( ! is_string( $confirm_url ) || '' === $confirm_url ) {
+			return null;
+		}
+		$query = parse_url( $path, PHP_URL_QUERY );
+		if ( ! is_string( $query ) || '' === $query ) {
+			return null;
+		}
+		$query_vars = array();
+		wp_parse_str( $query, $query_vars );
+		if ( empty( $query_vars['key'] ) || empty( $query_vars['login'] ) ) {
+			return null;
+		}
+		return add_query_arg(
+			array(
+				'key'   => $query_vars['key'],
+				'login' => $query_vars['login'],
+			),
+			$confirm_url
+		);
+	}
+
+	/**
+	 * Return the AuthVault login page URL when URL hiding is enabled, otherwise null.
+	 *
+	 * @return string|null Login page URL or null.
+	 */
+	private function get_login_page_url_if_hiding() {
+		if ( ! authvault_get_option( 'enable_login_url_hiding', false ) ) {
+			return null;
+		}
+		$page_id = (int) authvault_get_option( 'login_page_id', 0 );
+		if ( 0 >= $page_id ) {
+			return null;
+		}
+		$login_url = get_permalink( $page_id );
+		if ( ! is_string( $login_url ) || '' === $login_url ) {
+			return null;
+		}
+		return $login_url;
+	}
+
+	/**
+	 * Filter site_url for wp-login.php: (a) rewrite password-reset confirm links to the Set New
+	 * Password page, (b) when URL hiding is enabled, replace other wp-login URLs with the AuthVault
+	 * login page. Excludes admin-ajax and wp-json from replacement.
+	 *
+	 * @param string      $url     Full URL.
+	 * @param string      $path    Path (e.g. wp-login.php or wp-login.php?action=rp&key=...&login=...).
+	 * @param string|null $scheme  Scheme.
+	 * @param int|null    $blog_id Blog ID (multisite).
+	 * @return string
+	 */
+	public function filter_site_url_wp_login( $url, $path, $scheme = null, $blog_id = null ) {
+		if ( ! is_string( $path ) || strpos( $path, 'wp-login.php' ) === false ) {
+			return $url;
+		}
+
+		$confirm_url = $this->rewrite_reset_confirm_url_from_path( $path );
+		if ( null !== $confirm_url ) {
+			return $confirm_url;
+		}
+
+		if ( strpos( $path, 'admin-ajax.php' ) !== false ) {
+			return $url;
+		}
+		$parsed = wp_parse_url( $url );
+		if ( ! empty( $parsed['path'] ) && strpos( $parsed['path'], 'wp-json' ) !== false ) {
+			return $url;
+		}
+
+		$login_url = $this->get_login_page_url_if_hiding();
+		if ( null !== $login_url ) {
+			return $login_url;
+		}
+		return $url;
+	}
+
+	/**
+	 * Filter network_site_url for wp-login.php: (a) rewrite password-reset confirm links to the
+	 * Set New Password page, (b) when URL hiding is enabled, replace other wp-login URLs with the
+	 * AuthVault login page.
 	 *
 	 * @param string $url    Full URL.
-	 * @param string $path   Path (e.g. wp-login.php).
+	 * @param string $path   Path (e.g. wp-login.php or wp-login.php?action=rp&key=...&login=...).
 	 * @param string $scheme Scheme.
 	 * @return string
 	 */
@@ -338,15 +436,17 @@ class AuthVault_Router {
 		if ( 'wp-login.php' !== $path && strpos( $path, 'wp-login.php' ) !== 0 ) {
 			return $url;
 		}
-		$page_id = (int) authvault_get_option( 'login_page_id', 0 );
-		if ( 0 >= $page_id ) {
-			return $url;
+
+		$confirm_url = $this->rewrite_reset_confirm_url_from_path( $path );
+		if ( null !== $confirm_url ) {
+			return $confirm_url;
 		}
-		$login_url = get_permalink( $page_id );
-		if ( ! is_string( $login_url ) || '' === $login_url ) {
-			return $url;
+
+		$login_url = $this->get_login_page_url_if_hiding();
+		if ( null !== $login_url ) {
+			return $login_url;
 		}
-		return $login_url;
+		return $url;
 	}
 
 	/**
@@ -374,6 +474,11 @@ class AuthVault_Router {
 	/**
 	 * Redirect logged-in users away from login and register pages.
 	 *
+	 * The destination is controlled by the logged_in_redirect_behavior option:
+	 *  - 'home'      — site home page
+	 *  - 'dashboard' — WordPress admin dashboard (default)
+	 *  - 'page'      — a specific page (logged_in_redirect_page_id)
+	 *
 	 * @return void
 	 */
 	public function protect_auth_pages() {
@@ -383,38 +488,44 @@ class AuthVault_Router {
 
 		$login_page_id    = (int) authvault_get_option( 'login_page_id', 0 );
 		$register_page_id = (int) authvault_get_option( 'register_page_id', 0 );
-		
+
 		if ( 0 >= $login_page_id && 0 >= $register_page_id ) {
 			return;
 		}
 
-		// Allow admins and users who can edit pages to open the login/register page in Elementor editor.
 		$elementor_preview = isset( $_GET['elementor-preview'] ) ? sanitize_text_field( wp_unslash( $_GET['elementor-preview'] ) ) : '';
-		
+
 		if ( current_user_can( 'edit_pages' ) && '' !== $elementor_preview ) {
 			return;
 		}
 
 		$current_page_id = get_queried_object_id();
-		
+
 		if ( 0 >= $current_page_id ) {
 			return;
 		}
-		
+
+		if ( $current_page_id !== $login_page_id && $current_page_id !== $register_page_id ) {
+			return;
+		}
+
+		$behavior     = authvault_get_option( 'logged_in_redirect_behavior', 'dashboard' );
 		$redirect_url = home_url();
-		$login_redirect_page_id = (int) authvault_get_option( 'login_redirect_page_id', 0 );
-		
-		if ( 0 < $login_redirect_page_id ) {
-			$url = get_permalink( $login_redirect_page_id );
-			if ( is_string( $url ) && '' !== $url ) {
-				$redirect_url = $url;
+
+		if ( 'dashboard' === $behavior ) {
+			$redirect_url = admin_url();
+		} elseif ( 'page' === $behavior ) {
+			$page_id = (int) authvault_get_option( 'logged_in_redirect_page_id', 0 );
+			if ( 0 < $page_id ) {
+				$url = get_permalink( $page_id );
+				if ( is_string( $url ) && '' !== $url ) {
+					$redirect_url = $url;
+				}
 			}
 		}
-		
-		if ( $current_page_id === $login_page_id || $current_page_id === $register_page_id ) {
-			wp_safe_redirect( $redirect_url );
-			exit;
-		}
+
+		wp_safe_redirect( $redirect_url );
+		exit;
 	}
 
 	/**

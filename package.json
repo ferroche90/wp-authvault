@@ -1,6 +1,6 @@
 {
   "name": "wp-authvault",
-  "version": "1.1.0",
+  "version": "1.3.0",
   "description": "Build and minify assets for WP AuthVault.",
   "private": true,
   "scripts": {
@@ -8,7 +8,9 @@
     "minify:js": "terser assets/js/authvault-public.js -o assets/js/authvault-public.min.js -c -m && terser assets/js/authvault-admin.js -o assets/js/authvault-admin.min.js -c -m",
     "minify:css": "cleancss -O2 -o assets/css/authvault-public.min.css assets/css/authvault-public.css && cleancss -O2 -o assets/css/authvault-admin.min.css assets/css/authvault-admin.css && cleancss -O2 -o assets/css/authvault-elementor.min.css assets/css/authvault-elementor.css",
     "version": "node update-plugin-version.js",
-    "build": "npm run minify && node build.js",
+    "build": "npm run build:production",
+    "build:production": "npm run minify && node build.js",
+    "build:dev": "npm run minify && composer dump-autoload --optimize",
     "zip": "node build.js"
   },
   "devDependencies": {

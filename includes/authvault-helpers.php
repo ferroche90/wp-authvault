@@ -25,6 +25,40 @@ function authvault_get_option( string $key, mixed $default = null ): mixed {
 }
 
 /**
+ * Retrieve a message option, falling back to the provided default when the stored value is empty.
+ *
+ * @param string $key     Option key (e.g. 'msg_login_error').
+ * @param string $default Default message text when the option is blank.
+ * @return string
+ */
+function authvault_get_message( string $key, string $default = '' ): string {
+	$value = authvault_get_option( $key, '' );
+	return ( is_string( $value ) && '' !== $value ) ? $value : $default;
+}
+
+/**
+ * Whether the current request is in the Elementor editor or preview iframe.
+ *
+ * Used to show the confirm form (or invalid-link message) in the editor for styling
+ * when key/login are not in the URL.
+ *
+ * @return bool
+ */
+function authvault_is_elementor_editor_or_preview() {
+	if ( ! class_exists( '\Elementor\Plugin' ) ) {
+		return false;
+	}
+	$plugin = \Elementor\Plugin::$instance;
+	if ( isset( $plugin->editor ) && $plugin->editor->is_edit_mode() ) {
+		return true;
+	}
+	if ( isset( $plugin->preview ) && $plugin->preview->is_preview_mode() ) {
+		return true;
+	}
+	return false;
+}
+
+/**
  * Get the full array of default setting values.
  *
  * Used by authvault_get_option(), the settings page reset, and the activator.

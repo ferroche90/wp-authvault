@@ -46,6 +46,22 @@ class AuthVault_Auth {
 	const RESET_CONFIRM_NONCE_ACTION = 'authvault_reset_confirm';
 
 	/**
+	 * Inline errors for the password reset confirm form (not redirected).
+	 *
+	 * @var array<array{type: string, text: string}>
+	 */
+	private static $confirm_errors = array();
+
+	/**
+	 * Get confirm form inline errors stored during this request.
+	 *
+	 * @return array<array{type: string, text: string}>
+	 */
+	public static function get_confirm_errors() {
+		return self::$confirm_errors;
+	}
+
+	/**
 	 * Dispatch to the appropriate form handler on init (priority 1).
 	 *
 	 * @return void
@@ -134,12 +150,14 @@ class AuthVault_Auth {
 	 */
 	public function process_login() {
 		$nonce = isset( $_POST['authvault_login_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['authvault_login_nonce'] ) ) : '';
+
 		if ( '' === $nonce || ! wp_verify_nonce( $nonce, self::LOGIN_NONCE_ACTION ) ) {
 			$this->redirect_login_with_error();
 			return;
 		}
 
 		$security = AuthVault_Security::get_instance();
+		
 		if ( ! $security->verify_recaptcha( isset( $_POST['g-recaptcha-response'] ) ? sanitize_text_field( wp_unslash( $_POST['g-recaptcha-response'] ) ) : '' ) ) {
 			$this->redirect_login_with_error();
 			return;
@@ -170,7 +188,7 @@ class AuthVault_Auth {
 		);
 
 		if ( is_wp_error( $user ) ) {
-			$security->record_attempt( $ip_hash );
+			$security->record_attempt( $ip_hash, $username );
 			$security->log_login_attempt( $username, $ip_hash, 'fail' );
 			$this->redirect_login_with_error();
 			return;
@@ -184,6 +202,16 @@ class AuthVault_Auth {
 			wp_safe_redirect( $redirect_to );
 			exit;
 		}
+
+		$page_id = (int) authvault_get_option( 'login_redirect_page_id', 0 );
+		if ( 0 < $page_id ) {
+			$url = get_permalink( $page_id );
+			if ( is_string( $url ) && '' !== $url ) {
+				wp_safe_redirect( $url );
+				exit;
+			}
+		}
+
 		wp_safe_redirect( home_url() );
 		exit;
 	}
@@ -240,7 +268,9 @@ class AuthVault_Auth {
 		}
 
 		$default_role = authvault_get_option( 'default_role', 'subscriber' );
-		$editable     = array_keys( get_editable_roles() );
+		$editable     = function_exists( 'get_editable_roles' )
+			? array_keys( \get_editable_roles() )
+			: array_keys( \wp_roles()->roles );
 		if ( in_array( $default_role, $editable, true ) ) {
 			$user = get_userdata( $user_id );
 			if ( $user instanceof \WP_User ) {
@@ -292,11 +322,38 @@ class AuthVault_Auth {
 			return;
 		}
 
-		// retrieve_password() accepts user_login (username or email).
-		$result = retrieve_password( $login );
-		// Always show same success message (anti-enumeration).
+		if ( ! $this->check_reset_rate_limit() ) {
+			$this->redirect_reset_request_with_message();
+			return;
+		}
+
+		retrieve_password( $login );
 		$this->redirect_reset_request_with_message();
 		return;
+	}
+
+	/**
+	 * Check IP-based rate limit for password reset requests.
+	 *
+	 * @return bool True if within limits, false if rate-limited.
+	 */
+	private function check_reset_rate_limit() {
+		$ip_hash = $this->get_ip_hash();
+		if ( '' === $ip_hash ) {
+			return true;
+		}
+		$max    = (int) authvault_get_option( 'reset_rate_limit_max', 5 );
+		$max    = max( 1, $max );
+		$window = (int) authvault_get_option( 'reset_rate_limit_window_minutes', 15 );
+		$window = max( 1, $window ) * 60;
+
+		$key   = 'authvault_rrl_' . $ip_hash;
+		$count = (int) get_transient( $key );
+		if ( $count >= $max ) {
+			return false;
+		}
+		set_transient( $key, $count + 1, $window );
+		return true;
 	}
 
 	/**
@@ -317,6 +374,9 @@ class AuthVault_Auth {
 
 	/**
 	 * Process password reset confirm (new password): validate key/login, nonce, reset_password(), redirect.
+	 *
+	 * Unrecoverable errors (bad nonce, expired key) redirect. Password validation
+	 * errors are stored in self::$confirm_errors so the form re-renders with feedback.
 	 *
 	 * @return void
 	 */
@@ -340,11 +400,47 @@ class AuthVault_Auth {
 			return;
 		}
 
-		$pass1 = isset( $_POST['pass1'] ) ? wp_unslash( $_POST['pass1'] ) : '';
-		$pass2 = isset( $_POST['pass2'] ) ? wp_unslash( $_POST['pass2'] ) : '';
-		if ( ! is_string( $pass1 ) || ! is_string( $pass2 ) || $pass1 !== $pass2 || 1 > strlen( $pass1 ) ) {
-			$this->redirect_reset_confirm_error( 'invalidkey' );
+		$pass1 = isset( $_POST['pass1'] ) ? wp_unslash( $_POST['pass1'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$pass2 = isset( $_POST['pass2'] ) ? wp_unslash( $_POST['pass2'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+		if ( ! is_string( $pass1 ) || '' === $pass1 ) {
+			self::$confirm_errors[] = array(
+				'type' => 'error',
+				'text' => authvault_get_message( 'msg_confirm_password_empty', __( 'Please enter your new password.', 'authvault' ) ),
+			);
 			return;
+		}
+
+		if ( ! is_string( $pass2 ) || $pass1 !== $pass2 ) {
+			self::$confirm_errors[] = array(
+				'type' => 'error',
+				'text' => authvault_get_message( 'msg_confirm_password_mismatch', __( 'Passwords do not match. Please try again.', 'authvault' ) ),
+			);
+			return;
+		}
+
+		$min_length = (int) authvault_get_option( 'min_password_length', 10 );
+		if ( strlen( $pass1 ) < $min_length ) {
+			self::$confirm_errors[] = array(
+				'type' => 'error',
+				'text' => sprintf(
+					authvault_get_message( 'msg_confirm_password_weak', __( 'Password must be at least %d characters long.', 'authvault' ) ),
+					$min_length
+				),
+			);
+			return;
+		}
+
+		$allow_weak = (bool) authvault_get_option( 'allow_weak_passwords', false );
+		if ( ! $allow_weak ) {
+			$strength = isset( $_POST['authvault_password_strength'] ) ? (int) $_POST['authvault_password_strength'] : -1;
+			if ( $strength < 3 ) {
+				self::$confirm_errors[] = array(
+					'type' => 'error',
+					'text' => authvault_get_message( 'msg_confirm_password_too_weak', __( 'Please choose a stronger password. Use a mix of upper and lower case letters, numbers, and symbols.', 'authvault' ) ),
+				);
+				return;
+			}
 		}
 
 		reset_password( $user, $pass1 );

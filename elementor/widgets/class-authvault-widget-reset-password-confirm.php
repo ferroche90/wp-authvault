@@ -1,6 +1,6 @@
 <?php
 /**
- * Elementor widget: AuthVault Password Reset form.
+ * Elementor widget: AuthVault Set New Password (reset confirm) form.
  *
  * @package AuthVault
  */
@@ -17,31 +17,25 @@ use Elementor\Group_Control_Typography;
 use Elementor\Group_Control_Box_Shadow;
 
 /**
- * Elementor widget that renders the AuthVault password reset form.
+ * Elementor widget that renders the AuthVault password reset confirm form.
  */
-class AuthVault_Widget_Reset_Password extends Widget_Base {
+class AuthVault_Widget_Reset_Password_Confirm extends Widget_Base {
 
 	/**
-	 * Get widget name.
-	 *
 	 * @return string
 	 */
 	public function get_name() {
-		return 'authvault-reset-password';
+		return 'authvault-reset-password-confirm';
 	}
 
 	/**
-	 * Get widget title.
-	 *
 	 * @return string
 	 */
 	public function get_title() {
-		return __( 'AuthVault Reset Password', 'authvault' );
+		return __( 'AuthVault Set New Password', 'authvault' );
 	}
 
 	/**
-	 * Get widget icon.
-	 *
 	 * @return string
 	 */
 	public function get_icon() {
@@ -49,8 +43,6 @@ class AuthVault_Widget_Reset_Password extends Widget_Base {
 	}
 
 	/**
-	 * Get widget categories.
-	 *
 	 * @return array<string>
 	 */
 	public function get_categories() {
@@ -58,8 +50,6 @@ class AuthVault_Widget_Reset_Password extends Widget_Base {
 	}
 
 	/**
-	 * Register content and style controls.
-	 *
 	 * @return void
 	 */
 	protected function register_controls() {
@@ -68,8 +58,6 @@ class AuthVault_Widget_Reset_Password extends Widget_Base {
 	}
 
 	/**
-	 * Register Content tab controls.
-	 *
 	 * @return void
 	 */
 	protected function register_content_controls() {
@@ -95,7 +83,7 @@ class AuthVault_Widget_Reset_Password extends Widget_Base {
 			array(
 				'label'     => __( 'Form title text', 'authvault' ),
 				'type'      => Controls_Manager::TEXT,
-				'default'   => __( 'Reset password', 'authvault' ),
+				'default'   => __( 'Set new password', 'authvault' ),
 				'condition' => array( 'show_form_title' => 'yes' ),
 			)
 		);
@@ -105,7 +93,7 @@ class AuthVault_Widget_Reset_Password extends Widget_Base {
 			array(
 				'label'   => __( 'Show form description', 'authvault' ),
 				'type'    => Controls_Manager::SWITCHER,
-				'default' => '',
+				'default' => 'yes',
 			)
 		);
 
@@ -114,17 +102,8 @@ class AuthVault_Widget_Reset_Password extends Widget_Base {
 			array(
 				'label'     => __( 'Form description', 'authvault' ),
 				'type'      => Controls_Manager::TEXTAREA,
-				'default'   => __( 'Enter your username or email and we\'ll send you a link to reset your password.', 'authvault' ),
+				'default'   => __( 'Enter a new password below or use the generated one.', 'authvault' ),
 				'condition' => array( 'show_form_description' => 'yes' ),
-			)
-		);
-
-		$this->add_control(
-			'show_email_icon',
-			array(
-				'label'   => __( 'Show email icon', 'authvault' ),
-				'type'    => Controls_Manager::SWITCHER,
-				'default' => '',
 			)
 		);
 
@@ -138,74 +117,52 @@ class AuthVault_Widget_Reset_Password extends Widget_Base {
 		);
 
 		$this->add_control(
-			'show_placeholders',
-			array(
-				'label'   => __( 'Show placeholders', 'authvault' ),
-				'type'    => Controls_Manager::SWITCHER,
-				'default' => 'yes',
-			)
-		);
-
-		$this->add_control(
-			'username_label',
-			array(
-				'label'   => __( 'Username or email label', 'authvault' ),
-				'type'    => Controls_Manager::TEXT,
-				'default' => __( 'Username or email', 'authvault' ),
-			)
-		);
-
-		$this->add_control(
-			'username_placeholder',
-			array(
-				'label'   => __( 'Username or email placeholder', 'authvault' ),
-				'type'    => Controls_Manager::TEXT,
-				'default' => __( 'Username or email', 'authvault' ),
-			)
-		);
-
-		$this->add_control(
 			'submit_button_text',
 			array(
 				'label'   => __( 'Submit button text', 'authvault' ),
 				'type'    => Controls_Manager::TEXT,
-				'default' => __( 'Get new password', 'authvault' ),
-			)
-		);
-
-		$reset_redirect = home_url();
-		$reset_page_id  = (int) authvault_get_option( 'password_reset_page_id', 0 );
-		if ( 0 < $reset_page_id ) {
-			$url = get_permalink( $reset_page_id );
-			if ( is_string( $url ) && '' !== $url ) {
-				$reset_redirect = $url;
-			}
-		}
-		$this->add_control(
-			'redirect_after_success',
-			array(
-				'label'   => __( 'Redirect after success', 'authvault' ),
-				'type'    => Controls_Manager::URL,
-				'default' => array( 'url' => $reset_redirect ),
+				'default' => __( 'Save password', 'authvault' ),
 			)
 		);
 
 		$this->add_control(
-			'show_back_to_login_link',
+			'show_strength_meter',
 			array(
-				'label'   => __( 'Show "Back to login" link', 'authvault' ),
+				'label'   => __( 'Show password strength meter', 'authvault' ),
 				'type'    => Controls_Manager::SWITCHER,
 				'default' => 'yes',
 			)
 		);
 
 		$this->add_control(
-			'back_to_login_link_text',
+			'show_generate_button',
 			array(
-				'label'     => __( 'Back to login link text', 'authvault' ),
-				'type'      => Controls_Manager::TEXT,
-				'default'   => __( 'Back to login', 'authvault' ),
-				'condition' => array( 'show_back_to_login_link' => 'yes' ),
+				'label'   => __( 'Show "Generate password" button', 'authvault' ),
+				'type'    => Controls_Manager::SWITCHER,
+				'default' => 'yes',
+			)
+		);
+
+		$this->add_control(
+			'show_hint_text',
+			array(
+				'label'   => __( 'Show password hint text', 'authvault' ),
+				'type'    => Controls_Manager::SWITCHER,
+				'default' => 'yes',
+			)
+		);
+
+		$this->add_control(
+			'editor_preview_state',
+			array(
+				'label'       => __( 'Editor preview', 'authvault' ),
+				'type'        => Controls_Manager::SELECT,
+				'default'     => 'form',
+				'options'     => array(
+					'form'        => __( 'Set new password form', 'authvault' ),
+					'invalid_link' => __( 'Invalid link message', 'authvault' ),
+				),
+				'description' => __( 'Choose what to show in the editor so you can style it. Visitors always see the real form or invalid-link message based on their URL.', 'authvault' ),
 			)
 		);
 
@@ -213,11 +170,10 @@ class AuthVault_Widget_Reset_Password extends Widget_Base {
 	}
 
 	/**
-	 * Register Style tab controls.
-	 *
 	 * @return void
 	 */
 	protected function register_style_controls() {
+		// Form Container.
 		$this->start_controls_section(
 			'section_style_form_container',
 			array(
@@ -260,6 +216,7 @@ class AuthVault_Widget_Reset_Password extends Widget_Base {
 		);
 		$this->end_controls_section();
 
+		// Title.
 		$this->start_controls_section(
 			'section_style_title',
 			array(
@@ -297,30 +254,7 @@ class AuthVault_Widget_Reset_Password extends Widget_Base {
 		);
 		$this->end_controls_section();
 
-		$this->start_controls_section(
-			'section_style_description',
-			array(
-				'label' => __( 'Description', 'authvault' ),
-				'tab'   => Controls_Manager::TAB_STYLE,
-			)
-		);
-		$this->add_group_control(
-			Group_Control_Typography::get_type(),
-			array(
-				'name'     => 'description_typography',
-				'selector' => '{{WRAPPER}} .authvault-form-desc',
-			)
-		);
-		$this->add_control(
-			'description_color',
-			array(
-				'label'     => __( 'Color', 'authvault' ),
-				'type'      => Controls_Manager::COLOR,
-				'selectors' => array( '{{WRAPPER}} .authvault-form-desc' => 'color: {{VALUE}};' ),
-			)
-		);
-		$this->end_controls_section();
-
+		// Labels.
 		$this->start_controls_section(
 			'section_style_labels',
 			array(
@@ -345,6 +279,7 @@ class AuthVault_Widget_Reset_Password extends Widget_Base {
 		);
 		$this->end_controls_section();
 
+		// Input Fields.
 		$this->start_controls_section(
 			'section_style_inputs',
 			array(
@@ -357,7 +292,7 @@ class AuthVault_Widget_Reset_Password extends Widget_Base {
 			array(
 				'label'     => __( 'Background color', 'authvault' ),
 				'type'      => Controls_Manager::COLOR,
-				'selectors' => array( '{{WRAPPER}} .authvault-form input[type="text"], {{WRAPPER}} .authvault-form input[type="password"], {{WRAPPER}} .authvault-form input[type="email"]' => 'background-color: {{VALUE}};' ),
+				'selectors' => array( '{{WRAPPER}} .authvault-form input[type="text"], {{WRAPPER}} .authvault-form input[type="password"]' => 'background-color: {{VALUE}};' ),
 			)
 		);
 		$this->add_control(
@@ -365,7 +300,7 @@ class AuthVault_Widget_Reset_Password extends Widget_Base {
 			array(
 				'label'     => __( 'Text color', 'authvault' ),
 				'type'      => Controls_Manager::COLOR,
-				'selectors' => array( '{{WRAPPER}} .authvault-form input[type="text"], {{WRAPPER}} .authvault-form input[type="password"], {{WRAPPER}} .authvault-form input[type="email"]' => 'color: {{VALUE}};' ),
+				'selectors' => array( '{{WRAPPER}} .authvault-form input[type="text"], {{WRAPPER}} .authvault-form input[type="password"]' => 'color: {{VALUE}};' ),
 			)
 		);
 		$this->add_control(
@@ -388,7 +323,7 @@ class AuthVault_Widget_Reset_Password extends Widget_Base {
 					'dashed' => __( 'Dashed', 'authvault' ),
 				),
 				'default'   => 'solid',
-				'selectors' => array( '{{WRAPPER}} .authvault-form input[type="text"], {{WRAPPER}} .authvault-form input[type="password"], {{WRAPPER}} .authvault-form input[type="email"]' => 'border-style: {{VALUE}};' ),
+				'selectors' => array( '{{WRAPPER}} .authvault-form input[type="text"], {{WRAPPER}} .authvault-form input[type="password"]' => 'border-style: {{VALUE}};' ),
 			)
 		);
 		$this->add_responsive_control(
@@ -397,7 +332,7 @@ class AuthVault_Widget_Reset_Password extends Widget_Base {
 				'label'      => __( 'Width', 'authvault' ),
 				'type'       => Controls_Manager::DIMENSIONS,
 				'size_units' => array( 'px', 'em' ),
-				'selectors'  => array( '{{WRAPPER}} .authvault-form input[type="text"], {{WRAPPER}} .authvault-form input[type="password"], {{WRAPPER}} .authvault-form input[type="email"]' => 'border-width: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};' ),
+				'selectors'  => array( '{{WRAPPER}} .authvault-form input[type="text"], {{WRAPPER}} .authvault-form input[type="password"]' => 'border-width: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};' ),
 			)
 		);
 		$this->add_control(
@@ -405,7 +340,7 @@ class AuthVault_Widget_Reset_Password extends Widget_Base {
 			array(
 				'label'     => __( 'Color', 'authvault' ),
 				'type'      => Controls_Manager::COLOR,
-				'selectors' => array( '{{WRAPPER}} .authvault-form input[type="text"], {{WRAPPER}} .authvault-form input[type="password"], {{WRAPPER}} .authvault-form input[type="email"]' => 'border-color: {{VALUE}};' ),
+				'selectors' => array( '{{WRAPPER}} .authvault-form input[type="text"], {{WRAPPER}} .authvault-form input[type="password"]' => 'border-color: {{VALUE}};' ),
 			)
 		);
 		$this->add_responsive_control(
@@ -414,7 +349,7 @@ class AuthVault_Widget_Reset_Password extends Widget_Base {
 				'label'      => __( 'Border radius', 'authvault' ),
 				'type'       => Controls_Manager::DIMENSIONS,
 				'size_units' => array( 'px', '%' ),
-				'selectors'  => array( '{{WRAPPER}} .authvault-form input[type="text"], {{WRAPPER}} .authvault-form input[type="password"], {{WRAPPER}} .authvault-form input[type="email"]' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};' ),
+				'selectors'  => array( '{{WRAPPER}} .authvault-form input[type="text"], {{WRAPPER}} .authvault-form input[type="password"]' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};' ),
 			)
 		);
 		$this->add_responsive_control(
@@ -423,7 +358,7 @@ class AuthVault_Widget_Reset_Password extends Widget_Base {
 				'label'      => __( 'Padding', 'authvault' ),
 				'type'       => Controls_Manager::DIMENSIONS,
 				'size_units' => array( 'px', 'em', '%' ),
-				'selectors'  => array( '{{WRAPPER}} .authvault-form input[type="text"], {{WRAPPER}} .authvault-form input[type="password"], {{WRAPPER}} .authvault-form input[type="email"]' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};' ),
+				'selectors'  => array( '{{WRAPPER}} .authvault-form input[type="text"], {{WRAPPER}} .authvault-form input[type="password"]' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};' ),
 			)
 		);
 		$this->add_control(
@@ -436,6 +371,7 @@ class AuthVault_Widget_Reset_Password extends Widget_Base {
 		);
 		$this->end_controls_section();
 
+		// Submit Button.
 		$this->start_controls_section(
 			'section_style_submit',
 			array(
@@ -511,65 +447,201 @@ class AuthVault_Widget_Reset_Password extends Widget_Base {
 		);
 		$this->end_controls_section();
 
+		// Messages.
 		$this->start_controls_section(
-			'section_style_links',
+			'section_style_messages',
 			array(
-				'label' => __( 'Links', 'authvault' ),
+				'label' => __( 'Messages', 'authvault' ),
 				'tab'   => Controls_Manager::TAB_STYLE,
-			)
-		);
-		$this->add_control(
-			'links_color',
-			array(
-				'label'     => __( 'Color', 'authvault' ),
-				'type'      => Controls_Manager::COLOR,
-				'selectors' => array( '{{WRAPPER}} .authvault-form a' => 'color: {{VALUE}};' ),
-			)
-		);
-		$this->add_control(
-			'links_color_hover',
-			array(
-				'label'     => __( 'Color (hover)', 'authvault' ),
-				'type'      => Controls_Manager::COLOR,
-				'selectors' => array( '{{WRAPPER}} .authvault-form a:hover' => 'color: {{VALUE}};' ),
 			)
 		);
 		$this->add_group_control(
 			Group_Control_Typography::get_type(),
 			array(
-				'name'     => 'links_typography',
-				'selector' => '{{WRAPPER}} .authvault-form a',
+				'name'     => 'messages_typography',
+				'selector' => '{{WRAPPER}} .authvault-messages__item',
+			)
+		);
+		$this->add_control(
+			'messages_error_color',
+			array(
+				'label'     => __( 'Error text color', 'authvault' ),
+				'type'      => Controls_Manager::COLOR,
+				'selectors' => array( '{{WRAPPER}} .authvault-messages__item--error' => 'color: {{VALUE}}; border-left-color: {{VALUE}};' ),
+			)
+		);
+		$this->add_control(
+			'messages_success_color',
+			array(
+				'label'     => __( 'Success text color', 'authvault' ),
+				'type'      => Controls_Manager::COLOR,
+				'selectors' => array( '{{WRAPPER}} .authvault-messages__item--success' => 'color: {{VALUE}}; border-left-color: {{VALUE}};' ),
+			)
+		);
+		$this->end_controls_section();
+
+		// Invalid link.
+		$this->start_controls_section(
+			'section_style_invalid_link',
+			array(
+				'label' => __( 'Invalid link', 'authvault' ),
+				'tab'   => Controls_Manager::TAB_STYLE,
+			)
+		);
+		$this->add_group_control(
+			Group_Control_Typography::get_type(),
+			array(
+				'name'     => 'invalid_link_typography',
+				'selector' => '{{WRAPPER}} .authvault-reset-confirm-invalid-link',
+			)
+		);
+		$this->add_control(
+			'invalid_link_color',
+			array(
+				'label'     => __( 'Text color', 'authvault' ),
+				'type'      => Controls_Manager::COLOR,
+				'selectors' => array( '{{WRAPPER}} .authvault-reset-confirm-invalid-link' => 'color: {{VALUE}};' ),
+			)
+		);
+		$this->add_control(
+			'invalid_link_link_color',
+			array(
+				'label'     => __( 'Link color', 'authvault' ),
+				'type'      => Controls_Manager::COLOR,
+				'selectors' => array( '{{WRAPPER}} .authvault-reset-confirm-invalid-link a' => 'color: {{VALUE}};' ),
+			)
+		);
+		$this->add_control(
+			'invalid_link_link_color_hover',
+			array(
+				'label'     => __( 'Link color (hover)', 'authvault' ),
+				'type'      => Controls_Manager::COLOR,
+				'selectors' => array( '{{WRAPPER}} .authvault-reset-confirm-invalid-link a:hover' => 'color: {{VALUE}};' ),
+			)
+		);
+		$this->end_controls_section();
+
+		// Strength Meter.
+		$this->start_controls_section(
+			'section_style_strength',
+			array(
+				'label' => __( 'Strength Meter', 'authvault' ),
+				'tab'   => Controls_Manager::TAB_STYLE,
+			)
+		);
+		$this->add_control(
+			'strength_bar_height',
+			array(
+				'label'     => __( 'Bar height (px)', 'authvault' ),
+				'type'      => Controls_Manager::NUMBER,
+				'default'   => 6,
+				'selectors' => array( '{{WRAPPER}} .authvault-strength__bar' => 'height: {{VALUE}}px;' ),
+			)
+		);
+		$this->add_control(
+			'strength_bar_background',
+			array(
+				'label'     => __( 'Bar track color', 'authvault' ),
+				'type'      => Controls_Manager::COLOR,
+				'selectors' => array( '{{WRAPPER}} .authvault-strength__bar' => 'background-color: {{VALUE}};' ),
+			)
+		);
+		$this->end_controls_section();
+
+		// Generate Button.
+		$this->start_controls_section(
+			'section_style_generate',
+			array(
+				'label' => __( 'Generate Button', 'authvault' ),
+				'tab'   => Controls_Manager::TAB_STYLE,
+			)
+		);
+		$this->add_control(
+			'generate_text_color',
+			array(
+				'label'     => __( 'Text color', 'authvault' ),
+				'type'      => Controls_Manager::COLOR,
+				'selectors' => array( '{{WRAPPER}} .authvault-generate' => 'color: {{VALUE}}; border-color: {{VALUE}};' ),
+			)
+		);
+		$this->add_control(
+			'generate_bg_hover',
+			array(
+				'label'     => __( 'Background color (hover)', 'authvault' ),
+				'type'      => Controls_Manager::COLOR,
+				'selectors' => array( '{{WRAPPER}} .authvault-generate:hover' => 'background-color: {{VALUE}};' ),
+			)
+		);
+		$this->add_control(
+			'generate_text_color_hover',
+			array(
+				'label'     => __( 'Text color (hover)', 'authvault' ),
+				'type'      => Controls_Manager::COLOR,
+				'selectors' => array( '{{WRAPPER}} .authvault-generate:hover' => 'color: {{VALUE}};' ),
+			)
+		);
+		$this->add_group_control(
+			Group_Control_Typography::get_type(),
+			array(
+				'name'     => 'generate_typography',
+				'selector' => '{{WRAPPER}} .authvault-generate',
 			)
 		);
 		$this->end_controls_section();
 	}
 
 	/**
-	 * Render widget output.
-	 *
 	 * @return void
 	 */
 	protected function render() {
 		$settings = $this->get_settings_for_display();
-		$args     = array(
-			'show_form_title'         => 'yes' === $settings['show_form_title'],
-			'form_title_text'         => $settings['form_title_text'],
-			'show_form_description'   => 'yes' === $settings['show_form_description'],
-			'form_description'        => isset( $settings['form_description'] ) ? $settings['form_description'] : '',
-			'show_email_icon'         => 'yes' === $settings['show_email_icon'],
-			'show_labels'             => 'yes' === $settings['show_labels'],
-			'show_placeholders'       => 'yes' === $settings['show_placeholders'],
-			'username_label'         => isset( $settings['username_label'] ) ? $settings['username_label'] : __( 'Username or email', 'authvault' ),
-			'username_placeholder'   => isset( $settings['username_placeholder'] ) ? $settings['username_placeholder'] : __( 'Username or email', 'authvault' ),
-			'submit_button_text'      => $settings['submit_button_text'],
-			'redirect_after_success'  => isset( $settings['redirect_after_success']['url'] ) ? $settings['redirect_after_success']['url'] : '',
-			'show_back_to_login_link' => 'yes' === $settings['show_back_to_login_link'],
-			'back_to_login_link_text' => $settings['back_to_login_link_text'],
+
+		$preview_key   = '__authvault_preview__';
+		$preview_login = '__authvault_preview__';
+
+		$key   = isset( $_GET['key'] ) ? sanitize_text_field( wp_unslash( $_GET['key'] ) ) : '';
+		$login = isset( $_GET['login'] ) ? sanitize_user( wp_unslash( $_GET['login'] ), true ) : '';
+
+		$confirm_errors = \AuthVault\AuthVault_Auth::get_confirm_errors();
+
+		$args = array(
+			'show_form_title'       => 'yes' === $settings['show_form_title'],
+			'form_title_text'       => $settings['form_title_text'],
+			'show_form_description' => 'yes' === $settings['show_form_description'],
+			'form_description'      => isset( $settings['form_description'] ) ? $settings['form_description'] : '',
+			'show_labels'           => 'yes' === $settings['show_labels'],
+			'submit_button_text'    => $settings['submit_button_text'],
+			'show_strength_meter'   => 'yes' === $settings['show_strength_meter'],
+			'show_generate_button'  => 'yes' === $settings['show_generate_button'],
+			'show_hint_text'        => 'yes' === $settings['show_hint_text'],
+			'rp_key'                => $key,
+			'rp_login'              => $login,
+			'messages'              => $confirm_errors,
 		);
-		$this->add_render_attribute( 'wrapper', 'class', 'authvault-form-wrapper authvault-elementor-reset-password' );
+
+		$this->add_render_attribute( 'wrapper', 'class', 'authvault-form-wrapper authvault-elementor-reset-password-confirm' );
+
+		$in_editor = authvault_is_elementor_editor_or_preview();
+		$show_invalid = ( '' === $key || '' === $login ) && ( ! $in_editor || ( $in_editor && 'invalid_link' === $settings['editor_preview_state'] ) );
+		if ( $in_editor && ( '' === $key || '' === $login ) ) {
+			$args['rp_key']   = $preview_key;
+			$args['rp_login'] = $preview_login;
+		}
 		?>
 		<div <?php $this->print_render_attribute_string( 'wrapper' ); ?>>
-			<?php authvault_get_reset_form( $args, true ); ?>
+			<?php
+			if ( $show_invalid ) {
+				$reset_page_id = (int) authvault_get_option( 'password_reset_page_id', 0 );
+				$reset_url     = ( 0 < $reset_page_id ) ? get_permalink( $reset_page_id ) : home_url( '/wp-login.php?action=lostpassword' );
+				if ( ! is_string( $reset_url ) || '' === $reset_url ) {
+					$reset_url = home_url();
+				}
+				$msg = authvault_get_message( 'msg_confirm_invalid_link', __( 'This link is invalid or has expired. Please request a new password reset.', 'authvault' ) );
+				echo '<p class="authvault-reset-confirm-invalid-link">' . esc_html( $msg ) . ' <a href="' . esc_url( $reset_url ) . '">' . esc_html__( 'Request password reset', 'authvault' ) . '</a></p>';
+			} else {
+				authvault_get_reset_confirm_form( $args, true );
+			}
+			?>
 		</div>
 		<?php
 	}

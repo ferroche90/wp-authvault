@@ -12,8 +12,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Handles lockout/attempts, reCAPTCHA verification, site_url wp-login replacement,
- * and optional login attempt logging to a custom table.
+ * Handles lockout/attempts, reCAPTCHA verification, and optional login
+ * attempt logging to a custom table.
  */
 class AuthVault_Security {
 
@@ -39,11 +39,11 @@ class AuthVault_Security {
 	const RECAPTCHA_VERIFY_URL = 'https://www.google.com/recaptcha/api/siteverify';
 
 	/**
-	 * Minimum score to accept (reCAPTCHA v3).
+	 * Fallback minimum score for reCAPTCHA v3 (used when the option is missing).
 	 *
 	 * @var float
 	 */
-	const RECAPTCHA_MIN_SCORE = 0.5;
+	const RECAPTCHA_MIN_SCORE_FALLBACK = 0.5;
 
 	/**
 	 * Login log table name (without prefix).
@@ -82,7 +82,6 @@ class AuthVault_Security {
 	 * Constructor: register filters and actions.
 	 */
 	public function __construct() {
-		add_filter( 'site_url', array( $this, 'filter_site_url_wp_login' ), 10, 4 );
 	}
 
 	/**
@@ -133,10 +132,11 @@ class AuthVault_Security {
 	 *
 	 * Only runs when enable_lockout setting is on.
 	 *
-	 * @param string $identifier wp_hash() of IP address.
+	 * @param string $identifier      wp_hash() of IP address.
+	 * @param string $attempted_login  Optional. Username or email used in the failed attempt (for lockout notification).
 	 * @return int New attempt count after increment.
 	 */
-	public function record_attempt( $identifier ) {
+	public function record_attempt( $identifier, $attempted_login = '' ) {
 		if ( ! authvault_get_option( 'enable_lockout', false ) ) {
 			return 0;
 		}
@@ -158,8 +158,108 @@ class AuthVault_Security {
 			$lockout_key = self::LOCKOUT_TRANSIENT_PREFIX . $identifier;
 			$expiry_ts   = time() + $duration_sec;
 			set_transient( $lockout_key, $expiry_ts, $duration_sec );
+			if ( authvault_get_option( 'lockout_admin_email_notification', false ) ) {
+				$this->send_lockout_notification_email( $duration_min, $attempted_login );
+			}
 		}
 		return $current;
+	}
+
+	/**
+	 * Send one email to the admin (or lockout_notification_email) when an IP is locked out.
+	 * Only called when lockout_admin_email_notification is enabled.
+	 *
+	 * @param int    $duration_minutes Lockout duration in minutes (for the message).
+	 * @param string $attempted_login  Optional. Username or email used in the failed attempt.
+	 * @return void
+	 */
+	private function send_lockout_notification_email( $duration_minutes, $attempted_login = '' ) {
+		$to = authvault_get_option( 'lockout_notification_email', '' );
+		if ( '' === $to || ! is_email( $to ) ) {
+			$to = get_option( 'admin_email', '' );
+		}
+		if ( '' === $to || ! is_email( $to ) ) {
+			return;
+		}
+		$context   = $this->get_lockout_context( $attempted_login );
+		$site_name = get_bloginfo( 'name' );
+		$subject   = sprintf(
+			/* translators: %s: site name */
+			__( '[%s] Login lockout triggered', 'authvault' ),
+			$site_name
+		);
+		$message = sprintf(
+			/* translators: 1: site name, 2: lockout duration in minutes */
+			__( 'An IP address has been locked out due to too many failed login attempts on %1$s. The lockout lasts %2$d minute(s).', 'authvault' ),
+			$site_name,
+			$duration_minutes
+		);
+		$message .= "\n\n" . $this->format_lockout_context_for_email( $context );
+		wp_mail( $to, $subject, $message );
+	}
+
+	/**
+	 * Gather all available request/context information for the locked-out party.
+	 * Uses only data from the current request (no storage). Safe to use when sending lockout notifications.
+	 *
+	 * @param string $attempted_login Optional. Username or email they attempted to log in with.
+	 * @return array Associative array with keys: ip_address, user_agent, referrer, request_uri, request_method, request_time, attempted_login, and optionally forwarded_for.
+	 */
+	public function get_lockout_context( $attempted_login = '' ) {
+		$ip = isset( $_SERVER['REMOTE_ADDR'] ) && is_string( $_SERVER['REMOTE_ADDR'] )
+			? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) )
+			: '';
+		$user_agent = isset( $_SERVER['HTTP_USER_AGENT'] ) && is_string( $_SERVER['HTTP_USER_AGENT'] )
+			? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) )
+			: '';
+		$referrer = isset( $_SERVER['HTTP_REFERER'] ) && is_string( $_SERVER['HTTP_REFERER'] )
+			? esc_url_raw( wp_unslash( $_SERVER['HTTP_REFERER'] ) )
+			: '';
+		$request_uri = isset( $_SERVER['REQUEST_URI'] ) && is_string( $_SERVER['REQUEST_URI'] )
+			? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) )
+			: '';
+		$request_method = isset( $_SERVER['REQUEST_METHOD'] ) && is_string( $_SERVER['REQUEST_METHOD'] )
+			? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) )
+			: '';
+		$forwarded_for = '';
+		if ( ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) && is_string( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
+			$forwarded_for = sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_FORWARDED_FOR'] ) );
+		} elseif ( ! empty( $_SERVER['HTTP_X_REAL_IP'] ) && is_string( $_SERVER['HTTP_X_REAL_IP'] ) ) {
+			$forwarded_for = sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_REAL_IP'] ) );
+		}
+		$attempted_login = is_string( $attempted_login ) ? sanitize_text_field( $attempted_login ) : '';
+		return array(
+			'ip_address'      => $ip,
+			'user_agent'     => $user_agent,
+			'referrer'       => $referrer,
+			'request_uri'    => $request_uri,
+			'request_method' => $request_method,
+			'request_time'   => gmdate( 'Y-m-d H:i:s' ),
+			'attempted_login' => $attempted_login,
+			'forwarded_for'  => $forwarded_for,
+		);
+	}
+
+	/**
+	 * Format the lockout context array as plain text for inclusion in the notification email.
+	 *
+	 * @param array $context Result of get_lockout_context().
+	 * @return string Multi-line plain text (no HTML).
+	 */
+	private function format_lockout_context_for_email( array $context ) {
+		$lines = array(
+			__( 'Details:', 'authvault' ),
+			'- ' . __( 'IP address:', 'authvault' ) . ' ' . ( $context['ip_address'] !== '' ? $context['ip_address'] : '—' ),
+			'- ' . __( 'Attempted login:', 'authvault' ) . ' ' . ( $context['attempted_login'] !== '' ? $context['attempted_login'] : '—' ),
+			'- ' . __( 'Time (UTC):', 'authvault' ) . ' ' . ( isset( $context['request_time'] ) ? $context['request_time'] : '—' ),
+			'- ' . __( 'Request:', 'authvault' ) . ' ' . ( isset( $context['request_method'] ) ? $context['request_method'] : '—' ) . ' ' . ( isset( $context['request_uri'] ) ? $context['request_uri'] : '' ),
+			'- ' . __( 'User agent:', 'authvault' ) . ' ' . ( $context['user_agent'] !== '' ? $context['user_agent'] : '—' ),
+			'- ' . __( 'Referrer:', 'authvault' ) . ' ' . ( $context['referrer'] !== '' ? $context['referrer'] : '—' ),
+		);
+		if ( ! empty( $context['forwarded_for'] ) ) {
+			$lines[] = '- ' . __( 'X-Forwarded-For / X-Real-IP:', 'authvault' ) . ' ' . $context['forwarded_for'];
+		}
+		return implode( "\n", $lines );
 	}
 
 	/**
@@ -214,8 +314,9 @@ class AuthVault_Security {
 		if ( ! is_array( $json ) || empty( $json['success'] ) ) {
 			return false;
 		}
-		$score = isset( $json['score'] ) && is_numeric( $json['score'] ) ? (float) $json['score'] : 0.0;
-		return $score >= self::RECAPTCHA_MIN_SCORE;
+		$score     = isset( $json['score'] ) && is_numeric( $json['score'] ) ? (float) $json['score'] : 0.0;
+		$min_score = (float) authvault_get_option( 'recaptcha_min_score', self::RECAPTCHA_MIN_SCORE_FALLBACK );
+		return $score >= $min_score;
 	}
 
 	/**
@@ -251,45 +352,6 @@ class AuthVault_Security {
 			true
 		);
 		self::$recaptcha_enqueued = true;
-	}
-
-	/**
-	 * Filter site_url to replace wp-login.php with custom login page URL when URL hiding is enabled.
-	 *
-	 * Excludes REST and admin-ajax.php from replacement.
-	 *
-	 * @param string $url     Full URL.
-	 * @param string $path   Path (e.g. wp-login.php).
-	 * @param string $scheme Scheme.
-	 * @param string|null $blog_id Blog ID (for multisite).
-	 * @return string
-	 */
-	public function filter_site_url_wp_login( $url, $path, $scheme, $blog_id = null ) {
-		if ( ! authvault_get_option( 'enable_login_url_hiding', false ) ) {
-			return $url;
-		}
-		if ( ! is_string( $path ) ) {
-			return $url;
-		}
-		if ( strpos( $path, 'wp-login.php' ) === false ) {
-			return $url;
-		}
-		if ( strpos( $path, 'admin-ajax.php' ) !== false ) {
-			return $url;
-		}
-		$parsed = wp_parse_url( $url );
-		if ( ! empty( $parsed['path'] ) && strpos( $parsed['path'], 'wp-json' ) !== false ) {
-			return $url;
-		}
-		$page_id = (int) authvault_get_option( 'login_page_id', 0 );
-		if ( 0 >= $page_id ) {
-			return $url;
-		}
-		$login_url = get_permalink( $page_id );
-		if ( ! is_string( $login_url ) || '' === $login_url ) {
-			return $url;
-		}
-		return $login_url;
 	}
 
 	/**
@@ -335,5 +397,25 @@ class AuthVault_Security {
 	public static function get_log_table_name() {
 		global $wpdb;
 		return $wpdb->prefix . self::LOG_TABLE_NAME;
+	}
+
+	/**
+	 * Delete login log entries older than the configured retention period.
+	 *
+	 * Safe to call even when logging is disabled (it still cleans up old data).
+	 *
+	 * @return int Number of rows deleted.
+	 */
+	public static function cleanup_old_login_log_entries() {
+		$days = (int) authvault_get_option( 'login_log_retention_days', 90 );
+		$days = max( 1, $days );
+
+		global $wpdb;
+		$table    = self::get_log_table_name();
+		$cutoff   = gmdate( 'Y-m-d H:i:s', time() - ( $days * DAY_IN_SECONDS ) );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is safe.
+		$deleted = $wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE attempted_at < %s", $cutoff ) );
+		return is_int( $deleted ) ? $deleted : 0;
 	}
 }

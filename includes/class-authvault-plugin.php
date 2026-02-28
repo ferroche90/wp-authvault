@@ -113,6 +113,7 @@ class AuthVault_Plugin {
 		$this->loader->add_filter( 'logout_url', $router, 'filter_logout_url', 10, 2 );
 		$this->loader->add_filter( 'register_url', $router, 'filter_register_url', 10, 1 );
 		$this->loader->add_filter( 'lostpassword_url', $router, 'filter_lostpassword_url', 10, 2 );
+		$this->loader->add_filter( 'site_url', $router, 'filter_site_url_wp_login', 10, 4 );
 		$this->loader->add_filter( 'network_site_url', $router, 'filter_network_site_url', 10, 3 );
 		$this->loader->add_filter( 'login_redirect', $router, 'filter_login_redirect', 10, 3 );
 	}
@@ -127,12 +128,25 @@ class AuthVault_Plugin {
 	}
 
 	/**
-	 * Initialize security layer (site_url filter, etc.).
+	 * Initialize security layer and register log cleanup cron handler.
 	 *
 	 * @return void
 	 */
 	private function define_security() {
 		AuthVault_Security::get_instance();
+
+		$this->loader->add_action( AuthVault_Activator::LOG_CLEANUP_CRON_HOOK, $this, 'run_login_log_cleanup', 10, 0 );
+
+		AuthVault_Activator::schedule_log_cleanup();
+	}
+
+	/**
+	 * Cron callback: delete old login log entries.
+	 *
+	 * @return void
+	 */
+	public function run_login_log_cleanup() {
+		AuthVault_Security::cleanup_old_login_log_entries();
 	}
 
 	/**
@@ -154,6 +168,8 @@ class AuthVault_Plugin {
 	private function define_email_hooks() {
 		$this->loader->add_filter( 'wp_mail_from', $this, 'filter_mail_from_email', 10, 1 );
 		$this->loader->add_filter( 'wp_mail_from_name', $this, 'filter_mail_from_name', 10, 1 );
+		$this->loader->add_filter( 'retrieve_password_message', $this, 'filter_password_email_separator', 10, 4 );
+		$this->loader->add_filter( 'wp_new_user_notification_email', $this, 'filter_new_user_email_separator', 10, 3 );
 	}
 
 	/**
@@ -188,6 +204,67 @@ class AuthVault_Plugin {
 			return $custom;
 		}
 		return $from_name;
+	}
+
+	/**
+	 * Insert a clear separator between the set-password link and the login page link in password-related emails,
+	 * so email clients do not treat both URLs as a single link.
+	 *
+	 * @param string $message   Email message body.
+	 * @param string $key       Password reset key (unused).
+	 * @param string $user_login User login (unused).
+	 * @param \WP_User $user_data User object (unused).
+	 * @return string Filtered message.
+	 */
+	public function filter_password_email_separator( $message, $key, $user_login, $user_data ) {
+		return $this->insert_login_link_separator( $message );
+	}
+
+	/**
+	 * Insert a clear separator between the set-password link and the login page link in new user notification emails.
+	 *
+	 * @param array    $wp_new_user_notification_email Email data (to, subject, message, headers).
+	 * @param \WP_User $user                            New user.
+	 * @param string   $blogname                        Site title (unused).
+	 * @return array Filtered email data.
+	 */
+	public function filter_new_user_email_separator( $wp_new_user_notification_email, $user, $blogname ) {
+		if ( ! empty( $wp_new_user_notification_email['message'] ) && is_string( $wp_new_user_notification_email['message'] ) ) {
+			$wp_new_user_notification_email['message'] = $this->insert_login_link_separator( $wp_new_user_notification_email['message'] );
+		}
+		return $wp_new_user_notification_email;
+	}
+
+	/**
+	 * In a message that contains the AuthVault login page URL, replace the run of whitespace before that URL
+	 * with a clear separator line so the set-password link and login link are not merged by email clients.
+	 *
+	 * @param string $message Email body.
+	 * @return string Message with separator inserted when applicable.
+	 */
+	private function insert_login_link_separator( $message ) {
+		$login_page_id = (int) authvault_get_option( 'login_page_id', 0 );
+		if ( 0 >= $login_page_id ) {
+			return $message;
+		}
+		$login_url = get_permalink( $login_page_id );
+		if ( ! is_string( $login_url ) || '' === $login_url ) {
+			return $message;
+		}
+		$separator = "\n\n" . __( 'After setting your password, you can log in here:', 'authvault' ) . "\n\n";
+		// Match whitespace before the login URL (with or without trailing slash).
+		$login_url_variants = array( $login_url, rtrim( $login_url, '/' ), $login_url . '/' );
+		$login_url_variants = array_unique( array_filter( $login_url_variants ) );
+		foreach ( $login_url_variants as $variant ) {
+			$escaped  = preg_quote( $variant, '/' );
+			$pattern  = '/\s+' . $escaped . '/';
+			$replacement = $separator . $login_url;
+			$filtered = preg_replace( $pattern, $replacement, $message, 1 );
+			if ( is_string( $filtered ) && $filtered !== $message ) {
+				return $filtered;
+			}
+		}
+		return $message;
 	}
 
 	/**

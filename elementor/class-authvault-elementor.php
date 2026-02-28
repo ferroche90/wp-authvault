@@ -94,6 +94,7 @@ class AuthVault_Elementor {
 		$widgets_manager->register( new Widgets\AuthVault_Widget_Login() );
 		$widgets_manager->register( new Widgets\AuthVault_Widget_Register() );
 		$widgets_manager->register( new Widgets\AuthVault_Widget_Reset_Password() );
+		$widgets_manager->register( new Widgets\AuthVault_Widget_Reset_Password_Confirm() );
 	}
 
 	/**
