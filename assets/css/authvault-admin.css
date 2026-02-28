@@ -345,59 +345,202 @@
 }
 
 /* =================================================================
-   Logs tab — filter form and log table
+   Logs tab — filter bar
    ================================================================= */
+
+.authvault-log-filters {
+	display: flex;
+    justify-content: space-between;
+	margin-bottom: 0;
+	background-color: #fff;
+	border: 1px solid #c3c4c7;
+	border-top: none;
+	border-radius: 0 0 4px 4px;
+	padding: 25px;
+}
 
 .authvault-log-filter-form {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: 8px;
-	margin-bottom: 16px;
+	gap: 6px;
+	margin: 0;
+}
+
+.authvault-log-filter-group {
+	display: flex;
+	align-items: center;
+	gap: 5px;
 }
 
 .authvault-log-filter-form label {
+	font-size: 13px;
 	font-weight: 600;
-	margin-left: 4px;
+	color: #1d2327;
+	line-height: 1;
+	white-space: nowrap;
 }
 
+.authvault-log-filter-form select,
+.authvault-log-filter-form input[type="text"],
 .authvault-log-filter-form input[type="date"] {
-	max-width: 170px;
+	height: 32px;
+	padding: 0 8px;
+	font-size: 13px;
+	line-height: 30px;
+	color: #2c3338;
+	background: #fff;
+	border: 1px solid #8c8f94;
+	border-radius: 4px;
+	box-shadow: none;
+	box-sizing: border-box;
+	transition: border-color 0.15s ease;
+}
+
+.authvault-log-filter-form select:focus,
+.authvault-log-filter-form input[type="text"]:focus,
+.authvault-log-filter-form input[type="date"]:focus {
+	border-color: var(--wp-admin-theme-color, #2271b1);
+	box-shadow: 0 0 0 1px var(--wp-admin-theme-color, #2271b1);
+	outline: none;
+}
+
+.authvault-log-filter-form select {
+	min-width: 90px;
+	padding-right: 26px;
+	appearance: none;
+	-webkit-appearance: none;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2350575e'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right 8px center;
+	background-size: 10px 6px;
 }
 
 .authvault-log-filter-form input[type="text"] {
-	max-width: 220px;
+	width: 190px;
+}
+
+.authvault-log-filter-form input[type="date"] {
+	width: 150px;
+}
+
+.authvault-log-filter-actions {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin-left: 2px;
+}
+
+.authvault-log-filter-actions .button {
+	height: 32px;
+	line-height: 30px;
+	padding: 0 12px;
+	font-size: 13px;
+	border-radius: 4px;
+}
+
+/* =================================================================
+   Logs tab — table and status badges
+   ================================================================= */
+
+.authvault-log-viewer {
+	margin-top: 16px;
+}
+
+.authvault-log-viewer > .description {
+	margin: 0 0 8px;
+	font-size: 13px;
+	color: #646970;
 }
 
 .authvault-log-table {
-	margin-top: 8px;
+	margin: 0;
+	border-radius: 4px;
+	overflow: hidden;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.authvault-log-table thead th {
+	font-size: 13px;
+	font-weight: 600;
+	color: #1d2327;
+	background: #f6f7f7;
+	padding: 10px 14px;
+	border-bottom: 1px solid #c3c4c7;
+}
+
+.authvault-log-table tbody td {
+	padding: 10px 14px;
+	font-size: 13px;
+	color: #2c3338;
+	vertical-align: middle;
+}
+
+.authvault-log-table tbody tr:hover td {
+	background: #f6f7f7;
+}
+
+.authvault-log-status-success,
+.authvault-log-status-fail {
+	display: inline-block;
+	padding: 2px 10px;
+	font-size: 12px;
+	font-weight: 600;
+	line-height: 1.5;
+	border-radius: 10px;
 }
 
 .authvault-log-status-success {
 	color: #00a32a;
-	font-weight: 600;
+	background: rgba(0, 163, 42, 0.08);
 }
 
 .authvault-log-status-fail {
 	color: #d63638;
-	font-weight: 600;
+	background: rgba(214, 54, 56, 0.08);
 }
 
 .authvault-log-table code {
 	font-size: 12px;
+	font-family: Consolas, Monaco, monospace;
 	background: #f0f0f1;
-	padding: 2px 6px;
+	padding: 3px 8px;
 	border-radius: 3px;
+	color: #50575e;
+	letter-spacing: 0.3px;
 }
 
-.authvault-log-table .tablenav {
-	margin-top: 12px;
-}
+/* =================================================================
+   Logs tab — pagination
+   ================================================================= */
 
-.authvault-log-table .tablenav-pages {
+.authvault-log-pagination {
 	display: flex;
+	align-items: center;
 	gap: 4px;
 	flex-wrap: wrap;
+	margin-top: 16px;
+}
+
+.authvault-log-pagination .button {
+	min-width: 34px;
+	height: 34px;
+	padding: 0 10px;
+	font-size: 13px;
+	line-height: 32px;
+	text-align: center;
+	border-radius: 4px;
+}
+
+.authvault-log-pagination .button.button-primary.disabled {
+	pointer-events: none;
+}
+
+.authvault-log-pagination .button.disabled:not(.button-primary) {
+	pointer-events: none;
+	border-color: transparent;
+	background: transparent;
+	box-shadow: none;
 }
 
 /* =========================================================================
@@ -431,5 +574,31 @@
 	.authvault-settings-wrap .authvault-form-table select,
 	.authvault-settings-wrap .authvault-form-table textarea {
 		max-width: 100%;
+	}
+
+	.authvault-log-filter-form {
+		gap: 8px;
+	}
+
+	.authvault-log-filter-group {
+		flex: 1 1 calc(50% - 4px);
+	}
+
+	.authvault-log-filter-form select,
+	.authvault-log-filter-form input[type="text"],
+	.authvault-log-filter-form input[type="date"] {
+		flex: 1;
+		width: auto;
+		min-width: 0;
+	}
+
+	.authvault-log-filter-actions {
+		margin-left: 0;
+	}
+
+	.authvault-log-table thead th,
+	.authvault-log-table tbody td {
+		padding: 8px 10px;
+		font-size: 12px;
 	}
 }

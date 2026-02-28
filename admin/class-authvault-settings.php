@@ -648,27 +648,36 @@ class AuthVault_Settings {
 		echo '<form method="get" action="' . esc_url( admin_url( 'options-general.php' ) ) . '" class="authvault-log-filter-form">';
 		echo '<input type="hidden" name="page" value="' . esc_attr( self::PAGE_SLUG ) . '" />';
 
+		echo '<div class="authvault-log-filter-group">';
 		echo '<label for="authvault-log-status">' . esc_html__( 'Status', 'authvault' ) . '</label>';
 		echo '<select id="authvault-log-status" name="log_status">';
 		echo '<option value="">' . esc_html__( 'All', 'authvault' ) . '</option>';
 		echo '<option value="success"' . selected( $current_status, 'success', false ) . '>' . esc_html__( 'Success', 'authvault' ) . '</option>';
 		echo '<option value="fail"' . selected( $current_status, 'fail', false ) . '>' . esc_html__( 'Fail', 'authvault' ) . '</option>';
 		echo '</select>';
+		echo '</div>';
 
+		echo '<div class="authvault-log-filter-group">';
 		echo '<label for="authvault-log-search">' . esc_html__( 'User', 'authvault' ) . '</label>';
-		echo '<input type="text" id="authvault-log-search" name="log_search" value="' . esc_attr( $current_search ) . '" placeholder="' . esc_attr__( 'Username or email', 'authvault' ) . '" class="regular-text" />';
+		echo '<input type="text" id="authvault-log-search" name="log_search" value="' . esc_attr( $current_search ) . '" placeholder="' . esc_attr__( 'Username or email', 'authvault' ) . '" />';
+		echo '</div>';
 
+		echo '<div class="authvault-log-filter-group">';
 		echo '<label for="authvault-log-from">' . esc_html__( 'From', 'authvault' ) . '</label>';
 		echo '<input type="date" id="authvault-log-from" name="log_from" value="' . esc_attr( $current_from ) . '" />';
+		echo '</div>';
 
+		echo '<div class="authvault-log-filter-group">';
 		echo '<label for="authvault-log-to">' . esc_html__( 'To', 'authvault' ) . '</label>';
 		echo '<input type="date" id="authvault-log-to" name="log_to" value="' . esc_attr( $current_to ) . '" />';
+		echo '</div>';
 
+		echo '<div class="authvault-log-filter-actions">';
 		echo '<button type="submit" class="button">' . esc_html__( 'Filter', 'authvault' ) . '</button>';
 
 		$has_filters = '' !== $current_status || '' !== $current_search || '' !== $current_from || '' !== $current_to;
 		if ( $has_filters ) {
-			echo ' <a href="' . esc_url( $base_url ) . '#logs" class="button">' . esc_html__( 'Clear', 'authvault' ) . '</a>';
+			echo '<a href="' . esc_url( $base_url ) . '#logs" class="button">' . esc_html__( 'Clear', 'authvault' ) . '</a>';
 		}
 
 		$export_url = wp_nonce_url(
@@ -684,7 +693,8 @@ class AuthVault_Settings {
 			),
 			self::EXPORT_AJAX_ACTION
 		);
-		echo ' <a href="' . esc_url( $export_url ) . '" class="button">' . esc_html__( 'Export CSV', 'authvault' ) . '</a>';
+		echo '<a href="' . esc_url( $export_url ) . '" class="button">' . esc_html__( 'Export CSV', 'authvault' ) . '</a>';
+		echo '</div>';
 
 		echo '</form>';
 		echo '</div>';
@@ -749,8 +759,11 @@ class AuthVault_Settings {
 
 		$total_pages = (int) ceil( $total / $per_page );
 
+		echo '<div class="authvault-log-viewer">';
+
 		if ( empty( $rows ) ) {
 			echo '<p class="description">' . esc_html__( 'No log entries found.', 'authvault' ) . '</p>';
+			echo '</div>';
 			return;
 		}
 
@@ -801,6 +814,8 @@ class AuthVault_Settings {
 		if ( $total_pages > 1 ) {
 			$this->render_log_pagination( $paged, $total_pages );
 		}
+
+		echo '</div>';
 	}
 
 	/**
@@ -822,21 +837,21 @@ class AuthVault_Settings {
 			admin_url( 'options-general.php' )
 		);
 
-		echo '<div class="tablenav"><div class="tablenav-pages">';
+		echo '<div class="authvault-log-pagination">';
 
 		if ( $current > 1 ) {
-			echo '<a class="button" href="' . esc_url( add_query_arg( 'log_paged', $current - 1, $base_url ) . '#logs' ) . '">&laquo; ' . esc_html__( 'Previous', 'authvault' ) . '</a> ';
+			echo '<a class="button" href="' . esc_url( add_query_arg( 'log_paged', $current - 1, $base_url ) . '#logs' ) . '">&laquo; ' . esc_html__( 'Previous', 'authvault' ) . '</a>';
 		}
 
 		for ( $i = 1; $i <= $total; $i++ ) {
 			if ( $i === $current ) {
-				echo '<span class="button button-primary disabled">' . esc_html( (string) $i ) . '</span> ';
+				echo '<span class="button button-primary disabled">' . esc_html( (string) $i ) . '</span>';
 			} elseif ( $i <= 2 || $i > $total - 2 || abs( $i - $current ) <= 2 ) {
-				echo '<a class="button" href="' . esc_url( add_query_arg( 'log_paged', $i, $base_url ) . '#logs' ) . '">' . esc_html( (string) $i ) . '</a> ';
+				echo '<a class="button" href="' . esc_url( add_query_arg( 'log_paged', $i, $base_url ) . '#logs' ) . '">' . esc_html( (string) $i ) . '</a>';
 			} elseif ( $i === 3 && $current > 5 ) {
-				echo '<span class="button disabled">&hellip;</span> ';
+				echo '<span class="button disabled">&hellip;</span>';
 			} elseif ( $i === $total - 2 && $current < $total - 4 ) {
-				echo '<span class="button disabled">&hellip;</span> ';
+				echo '<span class="button disabled">&hellip;</span>';
 			}
 		}
 
@@ -844,7 +859,7 @@ class AuthVault_Settings {
 			echo '<a class="button" href="' . esc_url( add_query_arg( 'log_paged', $current + 1, $base_url ) . '#logs' ) . '">' . esc_html__( 'Next', 'authvault' ) . ' &raquo;</a>';
 		}
 
-		echo '</div></div>';
+		echo '</div>';
 	}
 
 	/**
