@@ -450,7 +450,7 @@ class AuthVault_Router {
 	}
 
 	/**
-	 * Filter login_redirect to send user to saved login redirect page or home.
+	 * Filter login_redirect to send user to saved login redirect page or dashboard.
 	 *
 	 * @param string        $redirect_to           Default redirect URL.
 	 * @param string        $requested_redirect_to redirect_to from request (if valid).
@@ -468,7 +468,7 @@ class AuthVault_Router {
 				return $url;
 			}
 		}
-		return home_url();
+		return admin_url();
 	}
 
 	/**

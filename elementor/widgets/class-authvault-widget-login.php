@@ -210,10 +210,10 @@ class AuthVault_Widget_Login extends Widget_Base {
 			)
 		);
 
-		$login_redirect = home_url();
-		$login_page_id   = (int) authvault_get_option( 'login_page_id', 0 );
-		if ( 0 < $login_page_id ) {
-			$url = get_permalink( $login_page_id );
+		$login_redirect = admin_url();
+		$page_id        = (int) authvault_get_option( 'login_redirect_page_id', 0 );
+		if ( 0 < $page_id ) {
+			$url = get_permalink( $page_id );
 			if ( is_string( $url ) && '' !== $url ) {
 				$login_redirect = $url;
 			}

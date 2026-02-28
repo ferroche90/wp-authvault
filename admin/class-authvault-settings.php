@@ -361,7 +361,7 @@ class AuthVault_Settings {
 		$this->render_page_row( 'register_page_id', __( 'Register Page', 'authvault' ), __( 'The page containing your registration form.', 'authvault' ) );
 		$this->render_page_row( 'password_reset_page_id', __( 'Password Reset Page', 'authvault' ), __( 'Where users request a password reset link.', 'authvault' ) );
 		$this->render_page_row( 'password_reset_confirm_page_id', __( 'Set New Password Page', 'authvault' ), __( 'Where users set their new password after clicking the email link.', 'authvault' ) );
-		$this->render_page_row( 'login_redirect_page_id', __( 'After Login Redirect', 'authvault' ), __( 'Where users are sent after a successful login. Defaults to home page.', 'authvault' ) );
+		$this->render_page_row( 'login_redirect_page_id', __( 'After Login Redirect', 'authvault' ), __( 'Where users are sent after a successful login. Defaults to WordPress dashboard.', 'authvault' ) );
 		$this->render_page_row( 'logout_redirect_page_id', __( 'After Logout Redirect', 'authvault' ), __( 'Where users are sent after logging out. Defaults to home page.', 'authvault' ) );
 		echo '</table>';
 
