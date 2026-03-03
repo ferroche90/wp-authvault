@@ -557,6 +557,22 @@ class AuthVault_Widget_Reset_Password_Confirm extends Widget_Base {
 			)
 		);
 		$this->add_control(
+			'generate_bg_color',
+			array(
+				'label'     => __( 'Background color', 'authvault' ),
+				'type'      => Controls_Manager::COLOR,
+				'selectors' => array( '{{WRAPPER}} .authvault-generate' => 'background-color: {{VALUE}};' ),
+			)
+		);
+		$this->add_control(
+			'generate_bg_color_hover',
+			array(
+				'label'     => __( 'Background color (hover)', 'authvault' ),
+				'type'      => Controls_Manager::COLOR,
+				'selectors' => array( '{{WRAPPER}} .authvault-generate:hover' => 'background-color: {{VALUE}};' ),
+			)
+		);
+		$this->add_control(
 			'generate_text_color',
 			array(
 				'label'     => __( 'Text color', 'authvault' ),
@@ -565,19 +581,11 @@ class AuthVault_Widget_Reset_Password_Confirm extends Widget_Base {
 			)
 		);
 		$this->add_control(
-			'generate_bg_hover',
-			array(
-				'label'     => __( 'Background color (hover)', 'authvault' ),
-				'type'      => Controls_Manager::COLOR,
-				'selectors' => array( '{{WRAPPER}} .authvault-generate:hover' => 'background-color: {{VALUE}};' ),
-			)
-		);
-		$this->add_control(
 			'generate_text_color_hover',
 			array(
 				'label'     => __( 'Text color (hover)', 'authvault' ),
 				'type'      => Controls_Manager::COLOR,
-				'selectors' => array( '{{WRAPPER}} .authvault-generate:hover' => 'color: {{VALUE}};' ),
+				'selectors' => array( '{{WRAPPER}} .authvault-generate:hover' => 'color: {{VALUE}}; border-color: {{VALUE}};' ),
 			)
 		);
 		$this->add_group_control(
@@ -585,6 +593,33 @@ class AuthVault_Widget_Reset_Password_Confirm extends Widget_Base {
 			array(
 				'name'     => 'generate_typography',
 				'selector' => '{{WRAPPER}} .authvault-generate',
+			)
+		);
+		$this->add_responsive_control(
+			'generate_border_radius',
+			array(
+				'label'      => __( 'Border radius', 'authvault' ),
+				'type'       => Controls_Manager::DIMENSIONS,
+				'size_units' => array( 'px', '%' ),
+				'selectors'  => array( '{{WRAPPER}} .authvault-generate' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};' ),
+			)
+		);
+		$this->add_responsive_control(
+			'generate_padding',
+			array(
+				'label'      => __( 'Padding', 'authvault' ),
+				'type'       => Controls_Manager::DIMENSIONS,
+				'size_units' => array( 'px', 'em', '%' ),
+				'selectors'  => array( '{{WRAPPER}} .authvault-generate' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};' ),
+			)
+		);
+		$this->add_control(
+			'generate_transition_duration',
+			array(
+				'label'     => __( 'Transition duration (ms)', 'authvault' ),
+				'type'      => Controls_Manager::NUMBER,
+				'default'   => 300,
+				'selectors' => array( '{{WRAPPER}} .authvault-generate' => 'transition-duration: {{VALUE}}ms;' ),
 			)
 		);
 		$this->end_controls_section();
