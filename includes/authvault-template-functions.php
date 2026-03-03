@@ -280,3 +280,75 @@ function authvault_get_reset_confirm_form( array $args = array(), $echo = true )
 	authvault_load_template( 'reset-password-confirm', $args );
 	return ob_get_clean();
 }
+
+/**
+ * Get logout block markup (title, username, logout button, optional login link).
+ * Used by shortcode and Elementor widget. Outputs nothing when user is not logged in.
+ *
+ * @param array<string, mixed> $args Block settings: show_title, title_text, button_text,
+ *                                   show_username, redirect_after_logout, show_login_link, login_link_text.
+ * @param bool                 $echo Whether to echo (true) or return (false).
+ * @param bool                 $wrap When true (default), output wrapper div; when false, inner content only (for Elementor widget).
+ * @return string Empty string when not logged in or when $echo true; otherwise HTML.
+ */
+function authvault_get_logout_block( array $args = array(), $echo = true, $wrap = true ) {
+	if ( ! is_user_logged_in() ) {
+		return '';
+	}
+
+	$args = array_merge(
+		array(
+			'show_title'           => true,
+			'title_text'           => __( 'You are logged in', 'authvault' ),
+			'button_text'          => __( 'Log out', 'authvault' ),
+			'show_username'        => true,
+			'redirect_after_logout' => home_url(),
+			'show_login_link'      => true,
+			'login_link_text'      => __( 'Back to login', 'authvault' ),
+		),
+		$args
+	);
+
+	$redirect = $args['redirect_after_logout'];
+	if ( ! is_string( $redirect ) || '' === $redirect || ! wp_http_validate_url( $redirect ) ) {
+		$redirect = home_url();
+	}
+
+	$login_url = wp_login_url();
+	$login_page_id = (int) authvault_get_option( 'login_page_id', 0 );
+	if ( 0 < $login_page_id ) {
+		$permalink = get_permalink( $login_page_id );
+		if ( is_string( $permalink ) && '' !== $permalink ) {
+			$login_url = $permalink;
+		}
+	}
+
+	ob_start();
+	if ( $wrap ) {
+		echo '<div class="authvault-logout-wrapper authvault-elementor-logout">';
+	}
+	?>
+	<?php if ( $args['show_title'] ) : ?>
+		<h2 class="authvault-logout-title"><?php echo esc_html( $args['title_text'] ); ?></h2>
+	<?php endif; ?>
+	<?php if ( $args['show_username'] ) : ?>
+		<p class="authvault-logout-username"><?php echo esc_html__( 'Logged in as ', 'authvault' ) . esc_html( wp_get_current_user()->user_login ); ?></p>
+	<?php endif; ?>
+	<a href="<?php echo esc_url( wp_logout_url( $redirect ) ); ?>" class="authvault-logout-btn"><?php echo esc_html( $args['button_text'] ); ?></a>
+	<?php if ( $args['show_login_link'] ) : ?>
+		<nav class="authvault-form__links" aria-label="<?php echo esc_attr__( 'Logout block links', 'authvault' ); ?>">
+			<a href="<?php echo esc_url( $login_url ); ?>" class="authvault-form__link"><?php echo esc_html( $args['login_link_text'] ); ?></a>
+		</nav>
+	<?php endif; ?>
+	<?php
+	if ( $wrap ) {
+		echo '</div>';
+	}
+	$html = ob_get_clean();
+
+	if ( $echo ) {
+		echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped above.
+		return '';
+	}
+	return $html;
+}

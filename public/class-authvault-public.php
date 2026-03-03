@@ -54,6 +54,7 @@ class AuthVault_Public {
 		add_shortcode( 'authvault_register', array( $this, 'shortcode_register' ) );
 		add_shortcode( 'authvault_reset_password', array( $this, 'shortcode_reset_password' ) );
 		add_shortcode( 'authvault_reset_password_confirm', array( $this, 'shortcode_reset_password_confirm' ) );
+		add_shortcode( 'authvault_logout', array( $this, 'shortcode_logout' ) );
 	}
 
 	/**
@@ -134,6 +135,47 @@ class AuthVault_Public {
 			),
 			false
 		);
+	}
+
+	/**
+	 * Shortcode callback: output the logout block (when user is logged in).
+	 *
+	 * @param array<string, mixed> $atts Shortcode attributes (optional overrides).
+	 * @return string HTML output or empty when not logged in.
+	 */
+	public function shortcode_logout( $atts = array() ) {
+		$atts = shortcode_atts(
+			array(
+				'show_title'       => 'yes',
+				'title_text'       => __( 'You are logged in', 'authvault' ),
+				'button_text'      => __( 'Log out', 'authvault' ),
+				'show_username'    => 'yes',
+				'redirect'         => '',
+				'show_login_link'  => 'yes',
+				'login_link_text'  => __( 'Back to login', 'authvault' ),
+			),
+			$atts,
+			'authvault_logout'
+		);
+
+		$redirect = isset( $atts['redirect'] ) && is_string( $atts['redirect'] ) && '' !== trim( $atts['redirect'] )
+			? trim( $atts['redirect'] )
+			: home_url();
+		if ( '' !== $redirect && ! wp_http_validate_url( $redirect ) ) {
+			$redirect = home_url();
+		}
+
+		$args = array(
+			'show_title'           => 'yes' === $atts['show_title'],
+			'title_text'           => $atts['title_text'],
+			'button_text'          => $atts['button_text'],
+			'show_username'        => 'yes' === $atts['show_username'],
+			'redirect_after_logout' => $redirect,
+			'show_login_link'      => 'yes' === $atts['show_login_link'],
+			'login_link_text'      => $atts['login_link_text'],
+		);
+
+		return authvault_get_logout_block( $args, false );
 	}
 
 	/**
