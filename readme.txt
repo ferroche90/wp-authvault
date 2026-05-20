@@ -1,6 +1,6 @@
 === WP AuthVault ===
 
-Contributors: (your username)
+Contributors: Fernando Roche
 Tags: authentication, login, register, password reset, elementor, security
 Requires at least: 6.4
 Tested up to: 6.4
